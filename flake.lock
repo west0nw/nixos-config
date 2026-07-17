@@ -212,6 +212,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-codex": {
+      "locked": {
+        "lastModified": 1784356753,
+        "narHash": "sha256-12KrbMiWLcf8m7pCvAtZh1ZrgF85ZXDXvfR/fWTKy84=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "61b7c44c4073f0b827768aff0049561b5110ea5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-opencode": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
@@ -299,6 +315,7 @@
         "home-manager": "home-manager",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-codex": "nixpkgs-codex",
         "nixpkgs-opencode": "nixpkgs-opencode",
         "nixvim": "nixvim",
         "spicetify-nix": "spicetify-nix",

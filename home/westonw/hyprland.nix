@@ -12,7 +12,7 @@ let
 
   powerMenu = pkgs.writeShellScript "power-menu" ''
     choice=$(echo -e "Shutdown\nReboot\nCancel" | wofi --dmenu --prompt "Power Menu" --width 300 --height 200)
-    
+
     case "$choice" in
       Shutdown)
         confirm=$(echo -e "Yes\nNo" | wofi --dmenu --prompt "Shutdown?" --width 200 --height 150)
@@ -83,6 +83,7 @@ in
           natural_scroll = true;
           tap-to-click = true;
           drag_lock = true;
+          disable_while_typing = false;
           scroll_factor = 0.25;
         };
       };
@@ -176,6 +177,9 @@ in
         force_default_wallpaper = 0;
         disable_hyprland_logo = true;
         disable_splash_rendering = true;
+        # Keep display wake independent of hypridle's inhibitor state.
+        key_press_enables_dpms = true;
+        mouse_move_enables_dpms = true;
         # Enable window swallowing - terminal windows hide when launching GUI apps
         enable_swallow = true;
         swallow_regex = "^(ghostty|alacritty|kitty|foot)$";

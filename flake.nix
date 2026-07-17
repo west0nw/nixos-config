@@ -8,6 +8,9 @@
     # Package repository
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # Current Codex CLI without updating the full system package set
+    nixpkgs-codex.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     # OpenCode (latest from upstream flake)
     nixpkgs-opencode.url = "github:anomalyco/opencode/v1.18.3";
 
@@ -43,6 +46,7 @@
     {
       self,
       nixpkgs,
+      nixpkgs-codex,
       nixpkgs-opencode,
       nixos-hardware,
       home-manager,

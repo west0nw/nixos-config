@@ -40,6 +40,8 @@ home/westonw/
   wofi.nix                       # App launcher config + embedded CSS
   swaync.nix                     # Notification daemon config (replaces mako)
   spicetify.nix                  # Spotify theming via Spicetify
+  opencode/
+    AGENTS.md                    # Global OpenCode instructions deployed by Home Manager
   nixvim/
     default.nix                  # Nixvim entrypoint (options, colorscheme)
     plugins.nix                  # Editor plugins (telescope, nvim-tree, treesitter, etc.)
@@ -197,8 +199,9 @@ Omit `let` entirely when no local bindings are needed.
 - Small `symlinkJoin`/wrapper derivations are used when an application must be
   forced onto native Wayland. Keep these wrappers minimal and app-specific.
 - Most flake inputs that depend on nixpkgs use `inputs.nixpkgs.follows = "nixpkgs"`.
-- Exception: `nixpkgs-opencode` is intentionally pinned to the upstream
-  `opencode` flake (`github:anomalyco/opencode`) so it can be updated
+- Exceptions: `nixpkgs-codex` is a separate nixpkgs pin for current Codex CLI
+  releases, and `nixpkgs-opencode` is intentionally pinned to the upstream
+  `opencode` flake (`github:anomalyco/opencode`). Both can be updated
   independently from the main system package set.
 
 ### Flake Inputs
@@ -206,6 +209,7 @@ Omit `let` entirely when no local bindings are needed.
 The following external inputs are used:
 
 - **nixpkgs** - Main package repository (nixos-unstable channel)
+- **nixpkgs-codex** - Separate nixpkgs pin for the current Codex CLI
 - **nixpkgs-opencode** - OpenCode upstream flake (`github:anomalyco/opencode`)
   for the latest release, updated independently from nixpkgs
 - **nixos-hardware** - Hardware-specific modules for Framework 16 AMD
@@ -215,7 +219,8 @@ The following external inputs are used:
 - **spicetify-nix** - Spotify theming via Spicetify (see `spicetify.nix`)
 
 Most inputs that depend on nixpkgs use `follows` to ensure version consistency.
-`nixpkgs-opencode` is the only exception (it uses the upstream opencode flake directly).
+`nixpkgs-codex` and `nixpkgs-opencode` are the exceptions: the former supplies
+the current Codex CLI, and the latter uses the upstream OpenCode flake directly.
 
 ### Desktop Rendering and Fractional Scaling
 
@@ -250,6 +255,18 @@ native Wayland argument rather than global font, DPI, or resolution hacks.
 
 Godot is wrapped as `godotWayland` in `home/westonw/default.nix`. Preserve its
 Wayland environment and launch flags when updating or reorganizing packages.
+Godot 4.7.1 uses the official prebuilt Linux binary through the `nixpkgs`
+overlay in `hosts/nullrunner/default.nix`. Keep the release URL, fixed-output
+hash, runtime dependencies, and `godot4` compatibility symlink in sync when
+updating it.
+
+Blender 5.2 also uses the official prebuilt Linux archive in
+`home/westonw/default.nix`. Its previous source build exhausted the laptop's
+32 GB of RAM with 12 parallel Ninja workers and caused the desktop-wide OOM
+failure. The Berkeley OCF mirror is used because `download.blender.org` presents
+a Cloudflare challenge to Nix. Preserve its archive hash, bundled library
+layout, runtime library path, MCP wrapper, and native Wayland behavior when
+updating it.
 
 ### OpenCode Packaging
 
