@@ -8,8 +8,8 @@
     # Package repository
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Dedicated nixpkgs for opencode updates
-    nixpkgs-opencode.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # OpenCode (latest from upstream flake)
+    nixpkgs-opencode.url = "github:anomalyco/opencode/v1.18.3";
 
     # Hardware-specific modules (Framework laptop)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
@@ -39,70 +39,72 @@
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    nixpkgs-opencode,
-    nixos-hardware,
-    home-manager,
-    nixvim,
-    stylix,
-    spicetify-nix,
-  }@inputs: {
-    nixosConfigurations.nullrunner = nixpkgs.lib.nixosSystem {
-      specialArgs = { inherit inputs; };
-      modules = [
-        {
-          nixpkgs.hostPlatform = "x86_64-linux";
-        }
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-opencode,
+      nixos-hardware,
+      home-manager,
+      nixvim,
+      stylix,
+      spicetify-nix,
+    }@inputs:
+    {
+      nixosConfigurations.nullrunner = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          {
+            nixpkgs.hostPlatform = "x86_64-linux";
+          }
 
-        # Hardware configuration
-        nixos-hardware.nixosModules.framework-16-amd-ai-300-series
+          # Hardware configuration
+          nixos-hardware.nixosModules.framework-16-amd-ai-300-series
 
-        # System configuration
-        ./hosts/nullrunner
+          # System configuration
+          ./hosts/nullrunner
 
-        # Stylix theming
-        stylix.nixosModules.stylix
+          # Stylix theming
+          stylix.nixosModules.stylix
 
-        # Home manager as NixOS module
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.backupFileExtension = "backup";
-          home-manager.users.westonw = import ./home/westonw;
-          home-manager.extraSpecialArgs = {
-            inherit inputs;
-            inherit (inputs) spicetify-nix;
-          };
-        }
-      ];
+          # Home manager as NixOS module
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "backup";
+            home-manager.users.westonw = import ./home/westonw;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+              inherit (inputs) spicetify-nix;
+            };
+          }
+        ];
+      };
+
+      nixosConfigurations.scar = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          {
+            nixpkgs.hostPlatform = "x86_64-linux";
+          }
+
+          # System configuration
+          ./hosts/scar
+
+          # Home manager as NixOS module
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "backup";
+            home-manager.users.westonw = import ./home/westonw/server.nix;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+              inherit (inputs) spicetify-nix;
+            };
+          }
+        ];
+      };
     };
-
-    nixosConfigurations.scar = nixpkgs.lib.nixosSystem {
-      specialArgs = { inherit inputs; };
-      modules = [
-        {
-          nixpkgs.hostPlatform = "x86_64-linux";
-        }
-
-        # System configuration
-        ./hosts/scar
-
-        # Home manager as NixOS module
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.backupFileExtension = "backup";
-          home-manager.users.westonw = import ./home/westonw/server.nix;
-          home-manager.extraSpecialArgs = {
-            inherit inputs;
-            inherit (inputs) spicetify-nix;
-          };
-        }
-      ];
-    };
-  };
 }

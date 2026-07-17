@@ -51,6 +51,24 @@ home/westonw/
 Home Manager is integrated as a NixOS module (not standalone), so a single
 rebuild command handles both system and user configuration.
 
+## Version Control
+
+This repository uses **Jujutsu (`jj`)**, colocated with Git for repository
+compatibility. Use `jj` for all VCS operations. Do not use `git status`,
+`git diff`, `git log`, `git add`, `git commit`, or other Git porcelain commands.
+
+Common inspection commands:
+
+```bash
+jj status
+jj diff
+jj log -n 10
+```
+
+Use non-interactive `jj` commands. Do not rewrite, abandon, squash, or otherwise
+modify changes that were not made as part of the current task. Only create or
+describe commits when the user explicitly requests it.
+
 ## Build / Rebuild Commands
 
 There is no Makefile, justfile, or CI pipeline. All operations use Nix CLI.
@@ -176,18 +194,20 @@ Omit `let` entirely when no local bindings are needed.
 - `lib.mkForce` to override Stylix auto-generated values.
 - `lib.mkDefault` only in `hardware-configuration.nix`.
 - No `lib.mkIf`, `lib.mkMerge`, `lib.mkOption`, or custom module options.
-- No custom packages, overlays, or derivations. All packages from nixpkgs or flake inputs.
+- Small `symlinkJoin`/wrapper derivations are used when an application must be
+  forced onto native Wayland. Keep these wrappers minimal and app-specific.
 - Most flake inputs that depend on nixpkgs use `inputs.nixpkgs.follows = "nixpkgs"`.
-- Exception: `nixpkgs-opencode` is intentionally pinned separately to update
-  `opencode` independently from the main system package set.
+- Exception: `nixpkgs-opencode` is intentionally pinned to the upstream
+  `opencode` flake (`github:anomalyco/opencode`) so it can be updated
+  independently from the main system package set.
 
 ### Flake Inputs
 
 The following external inputs are used:
 
 - **nixpkgs** - Main package repository (nixos-unstable channel)
-- **nixpkgs-opencode** - Separate nixpkgs pin used only for the `opencode`
-  package, so it can be updated more frequently without updating all packages
+- **nixpkgs-opencode** - OpenCode upstream flake (`github:anomalyco/opencode`)
+  for the latest release, updated independently from nixpkgs
 - **nixos-hardware** - Hardware-specific modules for Framework 16 AMD
 - **home-manager** - User environment management
 - **nixvim** - Declarative Neovim configuration
@@ -195,7 +215,74 @@ The following external inputs are used:
 - **spicetify-nix** - Spotify theming via Spicetify (see `spicetify.nix`)
 
 Most inputs that depend on nixpkgs use `follows` to ensure version consistency.
-`nixpkgs-opencode` is the only intentional split pin.
+`nixpkgs-opencode` is the only exception (it uses the upstream opencode flake directly).
+
+### Desktop Rendering and Fractional Scaling
+
+`nullrunner` runs Hyprland on Wayland. Its Framework internal display is
+`2560x1600@165` at fractional scale `1.25`; the external display uses scale `1`.
+The monitor configuration is in `home/westonw/hyprland.nix`.
+
+Applications using native Wayland render at the correct physical resolution.
+Applications that fall back to XWayland can be rendered at a lower logical
+resolution and enlarged by Hyprland on the `1.25` display. This causes fuzzy,
+pixelated text and icons. It is not an unavoidable Linux rendering limitation.
+
+When diagnosing a blurry application, leave it open and inspect:
+
+```bash
+hyprctl clients -j
+```
+
+If the application's client has `"xwayland": true`, prefer forcing the app's
+native Wayland backend. The exact mechanism depends on its toolkit:
+
+- Electron/Chromium: `--ozone-platform=wayland`
+- Godot/SDL: `SDL_VIDEODRIVER=wayland` and `--display-driver wayland`
+- Qt: use its native Wayland platform when supported
+- GTK: use its native Wayland backend when supported
+
+`environment.sessionVariables.NIXOS_OZONE_WL = "1"` in
+`modules/roles/desktop.nix` provides a general Electron hint, but applications
+may still select X11 when their launcher uses automatic backend detection. For
+apps known to render incorrectly, use an app-specific wrapper with an explicit
+native Wayland argument rather than global font, DPI, or resolution hacks.
+
+Godot is wrapped as `godotWayland` in `home/westonw/default.nix`. Preserve its
+Wayland environment and launch flags when updating or reorganizing packages.
+
+### OpenCode Packaging
+
+The `nixpkgs-opencode` input is pinned to an upstream OpenCode release tag. The
+CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`, which
+keeps it newer than the version in the main nixpkgs input. Its curl-based
+self-updater is disabled because Nix owns the installed version.
+
+OpenCode Desktop uses the official AppImage for the same release version. Do
+not replace it with the upstream flake's `opencode-desktop` output without first
+confirming that output builds. As of OpenCode `v1.18.3`, the upstream desktop
+derivation fails because it requires Bun `1.3.14` while its locked nixpkgs
+provides Bun `1.3.13` (upstream issue #36331). The AppImage is wrapped with
+`pkgs.appimageTools.wrapType2`, then with explicit Electron Wayland flags to
+prevent blurry XWayland rendering. A Home Manager desktop entry supplies the
+launcher and upstream icon.
+
+The release tag in `flake.nix`, AppImage URL, and fixed-output hash must stay in
+sync. A flake input pinned to an exact tag does not advance merely by running
+`nix flake update nixpkgs-opencode`. To update OpenCode to a new stable release:
+
+1. Change the `nixpkgs-opencode` release tag in `flake.nix`.
+2. Update the input with `nix flake update nixpkgs-opencode --flake ~/nixos-config`.
+3. Prefetch the matching `opencode-desktop-linux-x86_64.AppImage` with
+   `nix store prefetch-file --json <release-asset-url>`.
+4. Replace the AppImage hash in `home/westonw/default.nix` with the returned hash.
+5. Run `nix flake check` and build the Home Manager activation package so the
+   desktop application itself is tested, not only evaluated:
+
+```bash
+nix build --no-link \
+  .#nixosConfigurations.nullrunner.config.home-manager.users.westonw.home.activationPackage
+```
 
 ### Theming
 
@@ -205,8 +292,8 @@ functions (e.g., `rgba`, `rgb`) are defined in `let` blocks when needed.
 The theme is **Catppuccin Mocha** applied globally.
 
 **Wallpapers** are stored as image files in `wallpapers/` at the repo root
-and committed directly (jj/git LFS is not used -- typical wallpapers are
-well under 1 MB). The active wallpaper is set in `modules/roles/desktop.nix`
+and committed directly (LFS is not used -- typical wallpapers are well under
+1 MB). The active wallpaper is set in `modules/roles/desktop.nix`
 via `stylix.image = ../../wallpapers/<filename>;`.
 
 A **wallpaper switcher** is available via `Super+Shift+W` (defined in
