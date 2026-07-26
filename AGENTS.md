@@ -310,7 +310,8 @@ upstream gateway is dynamically linked, so `nullrunner` enables `programs.nix-ld
 and lets Sleev manage the gateway binary, authentication, registration, and user
 service in its mutable data directories. Sleev 1.6.7's gateway expects the
 `sleeve-provider` and `sleeve-harness` headers despite its documentation using
-the shorter `sleev-*` spelling.
+the shorter `sleev-*` spelling. OpenCode uses the `codex` Sleev route because
+its OpenAI credential is a ChatGPT OAuth login, not a pay-as-you-go API key.
 
 ### Theming
 

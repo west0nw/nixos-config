@@ -242,7 +242,7 @@ in
       provider.openai.options = {
         baseURL = "http://127.0.0.1:17321";
         headers = {
-          sleeve-provider = "openai";
+          sleeve-provider = "codex";
           sleeve-harness = "opencode";
         };
       };
