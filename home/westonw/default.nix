@@ -9,6 +9,25 @@ let
   codex = inputs.nixpkgs-codex.legacyPackages.${pkgs.system}.codex;
   opencode = inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode;
   opencodeVersion = builtins.head (lib.splitString "+" opencode.version);
+  sleevEnabled = true;
+  sleev = pkgs.stdenvNoCC.mkDerivation {
+    pname = "sleev";
+    version = "1.6.7";
+    src = pkgs.fetchurl {
+      url = "https://registry.npmjs.org/sleev-linux-x64/-/sleev-linux-x64-1.6.7.tgz";
+      hash = "sha256-ZanhuXZpM/TNvoJzFaRM7oKvS0XE3HlkMM4BBqjTyFE=";
+    };
+
+    sourceRoot = "package";
+
+    installPhase = ''
+      runHook preInstall
+
+      install -Dm755 bin/sleev $out/bin/sleev
+
+      runHook postInstall
+    '';
+  };
   blender =
     let
       runtimeLibs = with pkgs; [
@@ -195,27 +214,40 @@ in
     # Coding agent
     opencode
     codex
+    sleev
   ];
 
   # OpenCode is updated through the flake input, never its curl-based self-updater.
-  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
-    "$schema" = "https://opencode.ai/config.json";
-    autoupdate = false;
-    agent.explore = {
-      model = "openai/gpt-5.6-terra";
-      variant = "low";
-    };
-    mcp.blender = {
-      type = "local";
-      command = [ "${blenderMcp}/bin/blender-mcp" ];
-      enabled = true;
-      env = {
-        BLENDER_MCP_HOST = "localhost";
-        BLENDER_MCP_PORT = "9876";
-        BLENDER_PATH = "${blenderWithMcp}/bin/blender";
+  xdg.configFile."opencode/opencode.json".text = builtins.toJSON (
+    {
+      "$schema" = "https://opencode.ai/config.json";
+      autoupdate = false;
+      agent.explore = {
+        model = "openai/gpt-5.6-terra";
+        variant = "low";
       };
-    };
-  };
+      mcp.blender = {
+        type = "local";
+        command = [ "${blenderMcp}/bin/blender-mcp" ];
+        enabled = true;
+        env = {
+          BLENDER_MCP_HOST = "localhost";
+          BLENDER_MCP_PORT = "9876";
+          BLENDER_PATH = "${blenderWithMcp}/bin/blender";
+        };
+      };
+    }
+    // lib.optionalAttrs sleevEnabled {
+      compaction.prune = false;
+      provider.openai.options = {
+        baseURL = "http://127.0.0.1:17321";
+        headers = {
+          sleeve-provider = "openai";
+          sleeve-harness = "opencode";
+        };
+      };
+    }
+  );
 
   xdg.configFile."blender/5.2/extensions/user_default/mcp" = {
     source = "${blenderMcpSource}/addon/blender_mcp_addon";

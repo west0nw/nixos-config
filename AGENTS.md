@@ -301,6 +301,17 @@ nix build --no-link \
   .#nixosConfigurations.nullrunner.config.home-manager.users.westonw.home.activationPackage
 ```
 
+OpenCode's optional Sleev routing is controlled by `sleevEnabled` in
+`home/westonw/default.nix`; keep it disabled until `sleev gateway status` is
+healthy. The Sleev CLI is packaged from its official `sleev-linux-x64` npm
+tarball and pinned by version and hash. Update those together rather than using
+`sleev upgrade`, which cannot replace the immutable Nix store CLI. Sleev's
+upstream gateway is dynamically linked, so `nullrunner` enables `programs.nix-ld`
+and lets Sleev manage the gateway binary, authentication, registration, and user
+service in its mutable data directories. Sleev 1.6.7's gateway expects the
+`sleeve-provider` and `sleeve-harness` headers despite its documentation using
+the shorter `sleev-*` spelling.
+
 ### Theming
 
 Colors come from Stylix, accessed via `config.lib.stylix.colors` (base16).

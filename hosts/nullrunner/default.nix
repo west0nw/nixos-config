@@ -101,6 +101,9 @@
   # Use the latest kernel - recommended for AI 300 series
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Sleev downloads its gateway as a conventional dynamically linked Linux binary.
+  programs.nix-ld.enable = true;
+
   # Keep large parallel builds from exhausting RAM and taking down the desktop session.
   zramSwap.enable = true;
   nix.settings.cores = 8;
