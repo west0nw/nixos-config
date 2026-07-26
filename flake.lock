@@ -181,6 +181,22 @@
         "type": "github"
       }
     },
+    "matt-pocock-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786611981,
+        "narHash": "sha256-jsXcMkhu15MxR0zXnLLJeni0q0Aew2UxUSojl6zmOvg=",
+        "owner": "mattpocock",
+        "repo": "skills",
+        "rev": "8b78b531ab965735c5dc74f6f7a219e1e37326df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattpocock",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "locked": {
         "lastModified": 1769302137,
@@ -313,6 +329,7 @@
     "root": {
       "inputs": {
         "home-manager": "home-manager",
+        "matt-pocock-skills": "matt-pocock-skills",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-codex": "nixpkgs-codex",

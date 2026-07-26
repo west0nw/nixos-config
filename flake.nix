@@ -14,6 +14,12 @@
     # OpenCode (latest from upstream flake)
     nixpkgs-opencode.url = "github:anomalyco/opencode/v1.18.3";
 
+    # Matt Pocock's engineering skills for OpenCode
+    matt-pocock-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
+
     # Hardware-specific modules (Framework laptop)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
 
@@ -48,6 +54,7 @@
       nixpkgs,
       nixpkgs-codex,
       nixpkgs-opencode,
+      matt-pocock-skills,
       nixos-hardware,
       home-manager,
       nixvim,

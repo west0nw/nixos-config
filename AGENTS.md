@@ -212,6 +212,8 @@ The following external inputs are used:
 - **nixpkgs-codex** - Separate nixpkgs pin for the current Codex CLI
 - **nixpkgs-opencode** - OpenCode upstream flake (`github:anomalyco/opencode`)
   for the latest release, updated independently from nixpkgs
+- **matt-pocock-skills** - Non-flake source for Wayfinder and its required
+  composable engineering skills
 - **nixos-hardware** - Hardware-specific modules for Framework 16 AMD
 - **home-manager** - User environment management
 - **nixvim** - Declarative Neovim configuration
@@ -283,6 +285,11 @@ provides Bun `1.3.13` (upstream issue #36331). The AppImage is wrapped with
 `pkgs.appimageTools.wrapType2`, then with explicit Electron Wayland flags to
 prevent blurry XWayland rendering. A Home Manager desktop entry supplies the
 launcher and upstream icon.
+
+Wayfinder and its required Matt Pocock skills are pinned through the
+`matt-pocock-skills` non-flake input and deployed globally under
+`~/.config/opencode/skills/`. Preserve complete skill directories because the
+setup, domain-modeling, and prototype skills reference companion Markdown files.
 
 The release tag in `flake.nix`, AppImage URL, and fixed-output hash must stay in
 sync. A flake input pinned to an exact tag does not advance merely by running

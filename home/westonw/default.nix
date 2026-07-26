@@ -256,6 +256,31 @@ in
 
   xdg.configFile."opencode/AGENTS.md".source = ./opencode/AGENTS.md;
 
+  xdg.configFile."opencode/skills/wayfinder" = {
+    source = "${inputs.matt-pocock-skills}/skills/engineering/wayfinder";
+    recursive = true;
+  };
+  xdg.configFile."opencode/skills/setup-matt-pocock-skills" = {
+    source = "${inputs.matt-pocock-skills}/skills/engineering/setup-matt-pocock-skills";
+    recursive = true;
+  };
+  xdg.configFile."opencode/skills/grilling" = {
+    source = "${inputs.matt-pocock-skills}/skills/productivity/grilling";
+    recursive = true;
+  };
+  xdg.configFile."opencode/skills/domain-modeling" = {
+    source = "${inputs.matt-pocock-skills}/skills/engineering/domain-modeling";
+    recursive = true;
+  };
+  xdg.configFile."opencode/skills/research" = {
+    source = "${inputs.matt-pocock-skills}/skills/engineering/research";
+    recursive = true;
+  };
+  xdg.configFile."opencode/skills/prototype" = {
+    source = "${inputs.matt-pocock-skills}/skills/engineering/prototype";
+    recursive = true;
+  };
+
   xdg.desktopEntries."org.godotengine.Godot4.7" = {
     name = "Godot Engine 4.7.1";
     genericName = "Libre game engine";
