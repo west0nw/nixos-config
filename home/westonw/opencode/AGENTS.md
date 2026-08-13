@@ -5,6 +5,28 @@ OpenCode's global configuration is managed declaratively by Home Manager in
 `~/.config/opencode/` directly. Make configuration changes in the NixOS
 configuration repository instead, then apply the Home Manager configuration.
 
+# Version control
+
+The user has made a standing explicit request to commit completed changes. When
+working in a version-controlled project, validate the task and create a commit
+before the final response unless the user says not to commit. Follow the
+project's version-control instructions and commit only the current task's
+changes. Never include unrelated or pre-existing work.
+
+# Persistent goals
+
+Call `goal_start` only when the user's current message explicitly asks to start
+a persistent goal and contains the standalone word `goal`. Never infer goal
+intent from an ordinary task, requests for autonomous work, or phrases such as
+"keep going." When explicitly requested, write a concrete objective with
+verification criteria, choose the smallest reasonable `max_turns` and
+`max_minutes` budgets, then begin working immediately. As a guide, use 3-8
+turns and 15-30 minutes for a small goal, 10-25 turns and 60-120 minutes for a
+substantial goal, and 25-50 turns and 120-240 minutes only for a broad goal.
+Use the other `goal_*` tools to pause for genuine blockers, resume, cancel, or
+complete an existing goal as needed. A reply to a blocker automatically resumes
+the paused goal.
+
 # i-have-adhd
 
 The reader has ADHD. Output is not just brief. It is shaped so an ADHD brain can act on it.

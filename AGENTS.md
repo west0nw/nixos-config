@@ -71,8 +71,14 @@ jj log -n 10
 ```
 
 Use non-interactive `jj` commands. Do not rewrite, abandon, squash, or otherwise
-modify changes that were not made as part of the current task. Only create or
-describe commits when the user explicitly requests it.
+modify changes that were not made as part of the current task.
+
+The user has made a standing explicit request to commit completed configuration
+changes. After validating a task that modified this repository, create a
+Jujutsu commit before the final response unless the user says not to commit.
+Commit only the current task's changes; leave unrelated or pre-existing work in
+the working copy. Use a concise commit description matching the repository's
+existing style.
 
 ## Build / Rebuild Commands
 
@@ -296,11 +302,14 @@ the CLI's Bun runtime and Desktop's Node sidecar can load it despite Desktop's
 broken `@opencode-ai/plugin@local` dependency preparation. Keep it
 dependency-free unless that upstream bug is confirmed fixed. Goal state lives
 under `$XDG_DATA_HOME/opencode/goal-loop/`, outside project repositories.
-Only prompt-producing `/goal` and `/goal-resume` commands are exposed. Desktop
-server commands always start a model turn; do not implement status or control
-commands by replacing their prompts with model-facing acknowledgements. DCP's
-zero-token `/dcp` interception uses the separate TUI plugin API, which Desktop
-does not host.
+Only agent tools are exposed; there are no user-facing goal commands. Starting
+a goal requires an explicit request containing the standalone word `goal`; the
+plugin enforces this in addition to the global agent instructions. Active goals
+survive ordinary user replies, while replies to blocker-paused goals resume
+them automatically. Do not add server commands for status or control operations
+because Desktop always turns those into model prompts.
+DCP's zero-token `/dcp` interception uses the separate TUI plugin API, which
+Desktop does not host.
 
 Wayfinder and its required Matt Pocock skills are pinned through the
 `matt-pocock-skills` non-flake input and deployed globally under

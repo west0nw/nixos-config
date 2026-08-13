@@ -3,9 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const DEFAULT_MAX_TURNS = 50;
-const DEFAULT_MAX_MINUTES = 120;
-const MAX_NO_PROGRESS_TURNS = 3;
 const MAX_PROMPT_FAILURES = 3;
 const CONTINUATION_DELAY_MS = 1000;
 const INTERNAL_PROMPT_TTL_MS = 30000;
@@ -17,6 +14,8 @@ export default async function goalPlugin({ client, directory, worktree }) {
   const timers = new Map();
   const sending = new Set();
   const internalPrompts = new Map();
+  const startAuthorizations = new Set();
+  const failedSessions = new Set();
   const recoveryTimer = setTimeout(async () => {
     try {
       refreshStore();
@@ -24,7 +23,8 @@ export default async function goalPlugin({ client, directory, worktree }) {
       if (response?.error !== undefined) return;
       for (const [sessionID, goal] of Object.entries(store.sessions)) {
         if (goal.status !== "active") continue;
-        if (response?.data?.[sessionID]?.type !== "idle") continue;
+        const status = response?.data?.[sessionID];
+        if (status !== undefined && status.type !== "idle") continue;
         queueContinuation(sessionID, "startup-recovery");
       }
     } catch (error) {
@@ -118,34 +118,17 @@ export default async function goalPlugin({ client, directory, worktree }) {
       "Objective:",
       goal.objective,
       "",
-      "Continue until the objective is completely and verifiably finished, the user interrupts, or a safety limit pauses the loop.",
+      "Continue until the objective is completely and verifiably finished, the user cancels or redirects it, or a safety limit pauses the loop.",
       "Do not declare completion only in prose. Call goal_complete with a summary and concrete verification evidence.",
       "Call goal_pause when a real blocker requires user action.",
-      "Goal management commands override these continuation instructions for their command turn.",
     ].join("\n");
   }
 
   function evaluateIdle(sessionID) {
     refreshStore();
-    let goal = goalFor(sessionID);
+    const goal = goalFor(sessionID);
     if (goal === undefined || goal.status !== "active") return undefined;
 
-    if (goal.lastEvaluatedTurn !== goal.turn) {
-      const noProgressTurns = goal.toolCallsThisTurn > 0 ? 0 : goal.noProgressTurns + 1;
-      goal = putGoal(sessionID, {
-        ...goal,
-        lastEvaluatedTurn: goal.turn,
-        noProgressTurns,
-      });
-    }
-
-    if (goal.noProgressTurns >= MAX_NO_PROGRESS_TURNS) {
-      return pauseGoal(
-        sessionID,
-        `No tool-backed progress was detected for ${goal.noProgressTurns} consecutive turns.`,
-        "no-progress",
-      );
-    }
     if (goal.turn >= goal.maxTurns) {
       return pauseGoal(sessionID, `Maximum continuation turns reached (${goal.maxTurns}).`, "turn-limit");
     }
@@ -229,84 +212,10 @@ export default async function goalPlugin({ client, directory, worktree }) {
     timers.set(sessionID, timer);
   }
 
-  async function handleCommand(input, output) {
-    const owned = new Set(["goal", "goal-resume"]);
-    if (!owned.has(input.command)) return;
-
-    refreshStore();
-    const current = goalFor(input.sessionID);
-    let text;
-
-    if (input.command === "goal") {
-      const parsed = parseGoalArguments(input.arguments);
-      if (parsed.error !== undefined) {
-        await toast(`Goal not started: ${parsed.error}`, "error");
-        throw new Error(`[goal] ${parsed.error}`);
-      }
-      clearTimer(input.sessionID);
-      const now = Date.now();
-      const goal = putGoal(input.sessionID, {
-        id: crypto.randomUUID(),
-        objective: parsed.objective,
-        status: "active",
-        turn: 0,
-        maxTurns: parsed.maxTurns,
-        maxMinutes: parsed.maxMinutes,
-        startedAt: now,
-        updatedAt: now,
-        lastEvaluatedTurn: -1,
-        toolCallsThisTurn: 0,
-        noProgressTurns: 0,
-        promptFailures: 0,
-      });
-      text = goal.objective;
-      await toast(current === undefined ? "Goal started." : "Previous goal replaced.", "success");
-    } else {
-      if (current === undefined || current.status !== "paused") {
-        await toast("There is no paused goal to resume.", "warning");
-        throw new Error("[goal] There is no paused goal to resume.");
-      }
-      const resumed = putGoal(input.sessionID, {
-        ...current,
-        status: "active",
-        pauseReason: undefined,
-        stopReason: undefined,
-        noProgressTurns: 0,
-        promptFailures: 0,
-        toolCallsThisTurn: 0,
-        lastEvaluatedTurn: current.turn - 1,
-      });
-      text = "Continue the active goal.";
-      await toast("Goal resumed.", "success");
-    }
-
-    markInternalPrompt(input.sessionID);
-    replaceCommandText(output.parts, text);
-  }
-
   return {
-    config: async (config) => {
-      config.command ??= {};
-      config.command.goal = {
-        description: "Start a persistent goal loop",
-        agent: "build",
-        template: "$ARGUMENTS",
-      };
-      // Desktop server commands always become model turns. Only expose commands
-      // whose purpose is to start or resume model work.
-      config.command["goal-resume"] = {
-        description: "Resume the paused goal",
-        agent: "build",
-        template: "$ARGUMENTS",
-      };
-    },
-
-    "command.execute.before": handleCommand,
-
-    "chat.message": async (input) => {
+    "chat.message": async (input, output) => {
       refreshStore();
       const goal = goalFor(input.sessionID);
-      if (goal === undefined) return;
 
       const context = {
         agent: input.agent,
@@ -315,12 +224,29 @@ export default async function goalPlugin({ client, directory, worktree }) {
       };
       const internal = consumeInternalPrompt(input.sessionID);
       if (internal) {
-        putGoal(input.sessionID, { ...goal, context });
+        if (goal !== undefined) putGoal(input.sessionID, { ...goal, context });
         return;
       }
-      if (goal.status === "active") {
-        pauseGoal(input.sessionID, "A user message interrupted the automatic loop.", "user");
-        await toast("Goal paused because you sent a message.", "warning");
+
+      if (hasExplicitGoalWord(output?.parts)) startAuthorizations.add(input.sessionID);
+      else startAuthorizations.delete(input.sessionID);
+
+      if (goal === undefined) return;
+      clearTimer(input.sessionID);
+      failedSessions.delete(input.sessionID);
+      if (goal.status === "paused" && goal.stopReason === "blocked") {
+        putGoal(input.sessionID, {
+          ...goal,
+          status: "active",
+          pauseReason: undefined,
+          stopReason: undefined,
+          promptFailures: 0,
+          toolCallsThisTurn: 0,
+          context,
+        });
+        await toast("Goal resumed after your reply.", "success");
+      } else if (goal.status === "active") {
+        putGoal(input.sessionID, { ...goal, promptFailures: 0, context });
       }
     },
 
@@ -345,15 +271,157 @@ export default async function goalPlugin({ client, directory, worktree }) {
       if (event?.type === "session.error") {
         const sessionID = event.properties?.sessionID;
         if (sessionID === undefined) return;
-        const paused = pauseGoal(sessionID, `Session error: ${formatEventError(event.properties?.error)}`, "error");
-        if (paused !== undefined) await toast("Goal paused after a session error.", "error");
+        clearTimer(sessionID);
+        refreshStore();
+        const goal = goalFor(sessionID);
+        if (goal === undefined || goal.status !== "active") return;
+        const promptFailures = goal.promptFailures + 1;
+        const message = formatEventError(event.properties?.error);
+        putGoal(sessionID, { ...goal, promptFailures, lastError: message });
+        if (promptFailures >= MAX_PROMPT_FAILURES) {
+          failedSessions.delete(sessionID);
+          pauseGoal(
+            sessionID,
+            `Continuation failed ${promptFailures} times. Last error: ${message}`,
+            "prompt-failures",
+          );
+          await toast("Goal paused after repeated session errors.", "error");
+        } else {
+          failedSessions.add(sessionID);
+          await toast(`Goal continuation failed; retry ${promptFailures}/${MAX_PROMPT_FAILURES}.`, "warning");
+        }
         return;
       }
       if (event?.type !== "session.status" || event.properties?.status?.type !== "idle") return;
-      queueContinuation(event.properties.sessionID, "idle");
+      const sessionID = event.properties.sessionID;
+      const retry = failedSessions.delete(sessionID);
+      if (!retry) {
+        refreshStore();
+        const goal = goalFor(sessionID);
+        if (goal?.status === "active" && goal.promptFailures > 0) {
+          putGoal(sessionID, { ...goal, promptFailures: 0, lastError: undefined });
+        }
+      }
+      queueContinuation(sessionID, retry ? "session-error-retry" : "idle");
     },
 
     tool: {
+      goal_start: {
+        description: [
+          "Start a bounded persistent goal loop for this session and begin working on it immediately.",
+          "Use only when the user's current message explicitly asks to start a goal and contains the standalone word 'goal'.",
+          "Choose limits proportionate to the work. Calling this replaces any existing session goal.",
+        ].join(" "),
+        args: {
+          objective: {
+            type: "string",
+            description: "A specific, outcome-focused objective including required verification.",
+          },
+          max_turns: {
+            type: "integer",
+            minimum: 1,
+            maximum: 200,
+            description: "Maximum automatic continuation turns. Choose intelligently from 1 to 200.",
+          },
+          max_minutes: {
+            type: "integer",
+            minimum: 1,
+            maximum: 1440,
+            description: "Maximum elapsed runtime in minutes. Choose intelligently from 1 to 1440.",
+          },
+        },
+        execute: async (args, context) => {
+          if (!startAuthorizations.has(context.sessionID)) {
+            return "Goal not started: the current user message must explicitly ask to start a goal and contain the word 'goal'.";
+          }
+          const objective = typeof args.objective === "string" ? args.objective.trim() : "";
+          if (objective.length === 0) return "Goal not started: objective must not be empty.";
+          if (!Number.isInteger(args.max_turns) || args.max_turns < 1 || args.max_turns > 200) {
+            return "Goal not started: max_turns must be an integer from 1 to 200.";
+          }
+          if (!Number.isInteger(args.max_minutes) || args.max_minutes < 1 || args.max_minutes > 1440) {
+            return "Goal not started: max_minutes must be an integer from 1 to 1440.";
+          }
+
+          startAuthorizations.delete(context.sessionID);
+          refreshStore();
+          const previous = goalFor(context.sessionID);
+          clearTimer(context.sessionID);
+          const now = Date.now();
+          putGoal(context.sessionID, {
+            id: crypto.randomUUID(),
+            objective,
+            status: "active",
+            turn: 0,
+            maxTurns: args.max_turns,
+            maxMinutes: args.max_minutes,
+            startedAt: now,
+            updatedAt: now,
+            toolCallsThisTurn: 0,
+            promptFailures: 0,
+          });
+          await toast(previous === undefined ? "Goal started." : "Previous goal replaced.", "success");
+          return `Goal started with limits of ${args.max_turns} continuations and ${args.max_minutes} minutes. Begin working on this objective now: ${objective}`;
+        },
+      },
+
+      goal_status: {
+        description: "Read the persistent goal status for this session when the user asks about it.",
+        args: {},
+        execute: async (_args, context) => {
+          refreshStore();
+          const goal = goalFor(context.sessionID);
+          if (goal === undefined) return "No goal exists for this session.";
+          return formatGoal(goal);
+        },
+      },
+
+      goal_resume: {
+        description: "Resume this session's paused persistent goal and continue working on it immediately.",
+        args: {},
+        execute: async (_args, context) => {
+          refreshStore();
+          const goal = goalFor(context.sessionID);
+          if (goal === undefined || goal.status !== "paused") return "No paused goal can be resumed.";
+          putGoal(context.sessionID, {
+            ...goal,
+            status: "active",
+            pauseReason: undefined,
+            stopReason: undefined,
+            promptFailures: 0,
+            toolCallsThisTurn: 0,
+          });
+          await toast("Goal resumed.", "success");
+          return `Goal resumed. Continue working on this objective now: ${goal.objective}`;
+        },
+      },
+
+      goal_cancel: {
+        description: "Cancel this session's active or paused persistent goal when the user asks to stop it.",
+        args: {
+          reason: {
+            type: "string",
+            description: "Concise reason the goal is being cancelled.",
+          },
+        },
+        execute: async (args, context) => {
+          refreshStore();
+          const goal = goalFor(context.sessionID);
+          if (goal === undefined || goal.status === "completed" || goal.status === "cancelled") {
+            return "No open goal can be cancelled.";
+          }
+          clearTimer(context.sessionID);
+          putGoal(context.sessionID, {
+            ...goal,
+            status: "cancelled",
+            pauseReason: args.reason,
+            stopReason: "user",
+          });
+          await toast("Goal cancelled.", "success");
+          return `Goal cancelled: ${args.reason}`;
+        },
+      },
+
       goal_complete: {
         description: "Mark the active persistent goal complete after fully finishing and verifying its objective.",
         args: {
@@ -371,20 +439,10 @@ export default async function goalPlugin({ client, directory, worktree }) {
           const goal = goalFor(context.sessionID);
           if (goal === undefined || goal.status !== "active") return "No active goal can be completed.";
 
-          try {
-            const response = await client.session.todo({
-              path: { id: context.sessionID },
-              query: { directory },
-            });
-            if (response?.error !== undefined) return "Goal completion rejected: could not verify the session todo list.";
-            const unfinished = (response?.data ?? []).filter(
-              (todo) => todo.status === "pending" || todo.status === "in_progress",
-            );
-            if (unfinished.length > 0) {
-              return `Goal completion rejected: ${unfinished.length} session todo item(s) remain unfinished.`;
-            }
-          } catch (error) {
-            return `Goal completion rejected: todo verification failed: ${errorMessage(error)}`;
+          const summary = typeof args.summary === "string" ? args.summary.trim() : "";
+          const verification = typeof args.verification === "string" ? args.verification.trim() : "";
+          if (summary.length === 0 || verification.length === 0) {
+            return "Goal completion rejected: summary and verification must both be non-empty.";
           }
 
           clearTimer(context.sessionID);
@@ -392,8 +450,8 @@ export default async function goalPlugin({ client, directory, worktree }) {
             ...goal,
             status: "completed",
             completedAt: Date.now(),
-            completionSummary: args.summary,
-            verification: args.verification,
+            completionSummary: summary,
+            verification,
             stopReason: "completed",
           });
           await toast("Goal completed.", "success");
@@ -424,42 +482,11 @@ export default async function goalPlugin({ client, directory, worktree }) {
       timers.clear();
       sending.clear();
       internalPrompts.clear();
+      startAuthorizations.clear();
+      failedSessions.clear();
     },
   };
 };
-
-function parseGoalArguments(raw) {
-  let objective = raw.trim();
-  let maxTurns = DEFAULT_MAX_TURNS;
-  let maxMinutes = DEFAULT_MAX_MINUTES;
-
-  const turnMatch = objective.match(/(?:^|\s)--max-turns\s+(\d+)(?=\s|$)/);
-  if (turnMatch !== null) {
-    maxTurns = Number(turnMatch[1]);
-    objective = objective.replace(turnMatch[0], " ").trim();
-  }
-  const minuteMatch = objective.match(/(?:^|\s)--max-minutes\s+(\d+)(?=\s|$)/);
-  if (minuteMatch !== null) {
-    maxMinutes = Number(minuteMatch[1]);
-    objective = objective.replace(minuteMatch[0], " ").trim();
-  }
-
-  objective = objective.replace(/\s+/g, " ");
-  if (objective.length === 0) return { error: "Provide an objective after /goal." };
-  if (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 200) {
-    return { error: "--max-turns must be between 1 and 200." };
-  }
-  if (!Number.isInteger(maxMinutes) || maxMinutes < 1 || maxMinutes > 1440) {
-    return { error: "--max-minutes must be between 1 and 1440." };
-  }
-  return { objective, maxTurns, maxMinutes };
-}
-
-function replaceCommandText(parts, text) {
-  const part = parts.find((item) => item.type === "text");
-  if (part !== undefined) part.text = text;
-  else parts.push({ type: "text", text });
-}
 
 function goalStatePath(projectRoot) {
   const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
@@ -496,6 +523,27 @@ function saveStore(statePath, store) {
   fs.writeFileSync(temporary, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
   fs.renameSync(temporary, statePath);
   fs.chmodSync(statePath, 0o600);
+}
+
+function formatGoal(goal) {
+  const elapsedMinutes = Math.floor((Date.now() - goal.startedAt) / 60000);
+  const lines = [
+    `Status: ${goal.status}`,
+    `Objective: ${goal.objective}`,
+    `Automatic continuations: ${goal.turn}/${goal.maxTurns}`,
+    `Runtime: ${elapsedMinutes}/${goal.maxMinutes} minutes`,
+  ];
+  if (goal.pauseReason !== undefined) lines.push(`Reason: ${goal.pauseReason}`);
+  if (goal.completionSummary !== undefined) lines.push(`Completion: ${goal.completionSummary}`);
+  if (goal.verification !== undefined) lines.push(`Verification: ${goal.verification}`);
+  return lines.join("\n");
+}
+
+function hasExplicitGoalWord(parts) {
+  return (
+    Array.isArray(parts) &&
+    parts.some((part) => part?.type === "text" && part.synthetic !== true && /\bgoal\b/i.test(part.text ?? ""))
+  );
 }
 
 function formatEventError(error) {
