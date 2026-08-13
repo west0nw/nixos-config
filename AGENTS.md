@@ -7,8 +7,9 @@ machines owned by user **westonw**:
 - **nullrunner** - Framework 16-inch AMD AI 300 series laptop (desktop role)
 - **scar** - ASUS laptop repurposed as a home server (headless role)
 
-The entire codebase is written in the **Nix language**. There are no other
-build systems, package managers, or application-level source files.
+The configuration is written in the **Nix language**. The only application
+source file is a dependency-free JavaScript plugin for OpenCode; it has no
+separate build system or package manager.
 
 ## Architecture
 
@@ -42,6 +43,8 @@ home/westonw/
   spicetify.nix                  # Spotify theming via Spicetify
   opencode/
     AGENTS.md                    # Global OpenCode instructions deployed by Home Manager
+    plugins/
+      goal.js                    # Private persistent goal-loop plugin
   nixvim/
     default.nix                  # Nixvim entrypoint (options, colorscheme)
     plugins.nix                  # Editor plugins (telescope, nvim-tree, treesitter, etc.)
@@ -285,6 +288,19 @@ provides Bun `1.3.13` (upstream issue #36331). The AppImage is wrapped with
 `pkgs.appimageTools.wrapType2`, then with explicit Electron Wayland flags to
 prevent blurry XWayland rendering. A Home Manager desktop entry supplies the
 launcher and upstream icon.
+
+The private goal-loop plugin is deployed from
+`home/westonw/opencode/plugins/goal.js` to OpenCode's global plugin directory.
+It is a self-contained ESM file with no runtime package imports so both
+the CLI's Bun runtime and Desktop's Node sidecar can load it despite Desktop's
+broken `@opencode-ai/plugin@local` dependency preparation. Keep it
+dependency-free unless that upstream bug is confirmed fixed. Goal state lives
+under `$XDG_DATA_HOME/opencode/goal-loop/`, outside project repositories.
+Only prompt-producing `/goal` and `/goal-resume` commands are exposed. Desktop
+server commands always start a model turn; do not implement status or control
+commands by replacing their prompts with model-facing acknowledgements. DCP's
+zero-token `/dcp` interception uses the separate TUI plugin API, which Desktop
+does not host.
 
 Wayfinder and its required Matt Pocock skills are pinned through the
 `matt-pocock-skills` non-flake input and deployed globally under

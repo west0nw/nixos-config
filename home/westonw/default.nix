@@ -211,6 +211,10 @@ in
     libreoffice
     opencodeDesktopWayland
 
+    # Torrenting and VPN
+    qbittorrent
+    protonvpn-gui
+
     # Coding agent
     opencode
     codex
@@ -236,6 +240,11 @@ in
           BLENDER_PATH = "${blenderWithMcp}/bin/blender";
         };
       };
+      mcp.linear = {
+        type = "remote";
+        url = "https://mcp.linear.app/mcp";
+        enabled = true;
+      };
     }
     // lib.optionalAttrs sleevEnabled {
       compaction.prune = false;
@@ -255,6 +264,7 @@ in
   };
 
   xdg.configFile."opencode/AGENTS.md".source = ./opencode/AGENTS.md;
+  xdg.configFile."opencode/plugins/goal.js".source = ./opencode/plugins/goal.js;
 
   xdg.configFile."opencode/skills/wayfinder" = {
     source = "${inputs.matt-pocock-skills}/skills/engineering/wayfinder";
@@ -280,6 +290,17 @@ in
     source = "${inputs.matt-pocock-skills}/skills/engineering/prototype";
     recursive = true;
   };
+
+  # Bind qBittorrent to ProtonVPN's interface so it can never peer over the
+  # real uplink. `proton0` is ProtonVPN GUI's default device; confirm with
+  # `ip a` after the first VPN connection and adjust if yours differs.
+  xdg.configFile."qBittorrent/qBittorrent.conf".text = ''
+    [BitTorrent]
+    Session\InterfaceName=proton0
+
+    [Preferences]
+    General\ConfirmOnExit=true
+  '';
 
   xdg.desktopEntries."org.godotengine.Godot4.7" = {
     name = "Godot Engine 4.7.1";
