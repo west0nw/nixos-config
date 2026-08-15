@@ -63,7 +63,7 @@
       cursorline = true;
       scrolloff = 8;
       sidescrolloff = 8;
-      wrap = false;
+      wrap = true;
       showmode = false;
       splitbelow = true;
       splitright = true;
