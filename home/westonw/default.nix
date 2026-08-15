@@ -226,6 +226,7 @@ in
     {
       "$schema" = "https://opencode.ai/config.json";
       autoupdate = false;
+      permission.external_directory = "allow";
       agent.explore = {
         model = "openai/gpt-5.6-terra";
         variant = "low";
@@ -240,7 +241,12 @@ in
           BLENDER_PATH = "${blenderWithMcp}/bin/blender";
         };
       };
-      mcp.linear = {
+      mcp.linear_ember = {
+        type = "remote";
+        url = "https://mcp.linear.app/mcp";
+        enabled = true;
+      };
+      mcp.linear_proxy = {
         type = "remote";
         url = "https://mcp.linear.app/mcp";
         enabled = true;
