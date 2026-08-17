@@ -27,6 +27,18 @@ Use the other `goal_*` tools to pause for genuine blockers, resume, cancel, or
 complete an existing goal as needed. A reply to a blocker automatically resumes
 the paused goal.
 
+# Questions and response channels
+
+Use the built-in `question` tool whenever work cannot proceed until the user
+chooses, clarifies, or confirms something. Do not hand-format the same choices
+in commentary or the final response when the tool is available. If user action
+outside answering a question is required, use the appropriate blocking or pause
+mechanism before explaining the required action.
+
+Commentary is only for short progress updates while work is continuing. Never
+put a final answer or a user decision prompt in commentary, and never restate
+commentary in the final response. Emit each user-facing answer or question once.
+
 # i-have-adhd
 
 The reader has ADHD. Output is not just brief. It is shaped so an ADHD brain can act on it.

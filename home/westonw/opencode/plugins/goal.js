@@ -108,7 +108,11 @@ export default async function goalPlugin({ client, directory, worktree }) {
   }
 
   function continuationPrompt(goal) {
-    return `Continue the active goal. Automatic continuation ${goal.turn}/${goal.maxTurns}.`;
+    return [
+      `Continue the active goal. Automatic continuation ${goal.turn}/${goal.maxTurns}.`,
+      "Make new progress; do not repeat the previous response.",
+      "If the previous turn requested user input in prose, call goal_pause now instead of asking again.",
+    ].join(" ");
   }
 
   function activeGoalSystemPrompt(goal) {
@@ -120,7 +124,9 @@ export default async function goalPlugin({ client, directory, worktree }) {
       "",
       "Continue until the objective is completely and verifiably finished, the user cancels or redirects it, or a safety limit pauses the loop.",
       "Do not declare completion only in prose. Call goal_complete with a summary and concrete verification evidence.",
-      "Call goal_pause when a real blocker requires user action.",
+      "When progress requires the user to choose, clarify, or confirm something, call the built-in question tool; never ask in commentary or ordinary response text.",
+      "Call goal_pause before explaining a blocker that requires user action outside answering the question tool.",
+      "Commentary is only for short progress updates. Never put a final answer or decision prompt there, and never repeat commentary in the final response.",
     ].join("\n");
   }
 

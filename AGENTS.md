@@ -306,8 +306,12 @@ Only agent tools are exposed; there are no user-facing goal commands. Starting
 a goal requires an explicit request containing the standalone word `goal`; the
 plugin enforces this in addition to the global agent instructions. Active goals
 survive ordinary user replies, while replies to blocker-paused goals resume
-them automatically. Do not add server commands for status or control operations
-because Desktop always turns those into model prompts.
+them automatically. Global instructions require the built-in question tool for
+blocking choices and reserve commentary for progress updates so a decision
+prompt is not emitted once as commentary and again as a final answer. Automatic
+continuations also tell the agent to pause rather than repeat a prose question.
+Do not add server commands for status or control operations because Desktop
+always turns those into model prompts.
 DCP's zero-token `/dcp` interception uses the separate TUI plugin API, which
 Desktop does not host.
 
