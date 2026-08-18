@@ -56,6 +56,33 @@ let
     fi
   '';
 
+  vpnToggle = pkgs.writeShellScript "vpn-toggle" ''
+    app_config="''${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN/app-config.json"
+
+    if ${pkgs.hyprland}/bin/hyprctl clients -j \
+      | ${pkgs.jq}/bin/jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
+      ${pkgs.hyprland}/bin/hyprctl dispatch togglespecialworkspace vpn
+      exit
+    fi
+
+    # Proton 4.14 can keep a tray-only process that cannot recreate its window.
+    ${pkgs.procps}/bin/pkill -9 -f '/bin/.protonvpn-app-wrapped' 2>/dev/null || true
+    if [ -f "$app_config" ]; then
+      ${pkgs.jq}/bin/jq '.start_app_minimized = false' "$app_config" > "$app_config.tmp"
+      mv "$app_config.tmp" "$app_config"
+    fi
+    ${pkgs.protonvpn-gui}/bin/protonvpn-app >/dev/null 2>&1 &
+
+    for _ in $(seq 1 50); do
+      if ${pkgs.hyprland}/bin/hyprctl clients -j \
+        | ${pkgs.jq}/bin/jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
+        ${pkgs.hyprland}/bin/hyprctl dispatch togglespecialworkspace vpn
+        exit
+      fi
+      sleep 0.1
+    done
+  '';
+
 in
 {
   wayland.windowManager.hyprland = {
@@ -190,7 +217,7 @@ in
         # Scratchpad workspace (dropdown terminal)
         "special:scratchpad, on-created-empty:ghostty"
         # Proton VPN controller
-        "special:vpn, on-created-empty:protonvpn-app"
+        "special:vpn"
       ];
 
       # ── Variables ───────────────────────────────────────────────────────────────
@@ -199,6 +226,7 @@ in
       "$menu" = "wofi --show drun";
       "$wallpaper" = "${wallpaperSwitcher}";
       "$power" = "${powerMenu}";
+      "$vpn" = "${vpnToggle}";
 
       # ── Keybindings ─────────────────────────────────────────────────────────────
       bind = [
@@ -281,7 +309,7 @@ in
         "$mod SHIFT, grave, movetoworkspace, special:scratchpad"
 
         # Proton VPN workspace toggle
-        "$mod CTRL, V, togglespecialworkspace, vpn"
+        "$mod CTRL, V, exec, $vpn"
       ];
 
       # Mouse bindings
