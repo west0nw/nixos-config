@@ -186,8 +186,12 @@ in
       };
 
       # ── Special Workspaces ──────────────────────────────────────────────────────
-      # Scratchpad workspace (dropdown terminal)
-      workspace = [ "special:scratchpad, on-created-empty:ghostty" ];
+      workspace = [
+        # Scratchpad workspace (dropdown terminal)
+        "special:scratchpad, on-created-empty:ghostty"
+        # Proton VPN controller
+        "special:vpn, on-created-empty:protonvpn-app"
+      ];
 
       # ── Variables ───────────────────────────────────────────────────────────────
       "$mod" = "SUPER";
@@ -275,6 +279,9 @@ in
         "$mod, grave, togglespecialworkspace, scratchpad"
         # Move window to scratchpad
         "$mod SHIFT, grave, movetoworkspace, special:scratchpad"
+
+        # Proton VPN workspace toggle
+        "$mod CTRL, V, togglespecialworkspace, vpn"
       ];
 
       # Mouse bindings
@@ -308,6 +315,8 @@ in
         "float on, match:class ^(pavucontrol)$"
         "float on, match:class ^(nm-connection-editor)$"
         "float on, match:class ^(blueman-manager)$"
+        "workspace special:vpn silent, match:class ^(proton\\.vpn\\.app\\.gtk)$"
+        "float on, match:class ^(proton\\.vpn\\.app\\.gtk)$"
         "float on, match:class ^(thunar)$ match:title ^(File Operation Progress)$"
         "float on, match:title ^(Open File)$"
         "float on, match:title ^(Save As)$"
