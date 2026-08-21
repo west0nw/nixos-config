@@ -341,6 +341,7 @@ in
     shellAliases = {
       nrs = "sudo nixos-rebuild switch --flake ~/nixos-config#nullrunner";
       nuo = "nix flake update nixpkgs-opencode --flake ~/nixos-config";
+      python = "python3";
     };
   };
 
