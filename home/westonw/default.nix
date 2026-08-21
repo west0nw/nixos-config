@@ -201,6 +201,7 @@ in
     jq
     gh
     odin
+    python3
     godotWayland
 
     # GUI apps
