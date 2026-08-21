@@ -202,6 +202,7 @@ in
     gh
     odin
     python3
+    uv
     godotWayland
 
     # GUI apps
