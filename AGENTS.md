@@ -56,6 +56,12 @@ home/westonw/
 Home Manager is integrated as a NixOS module (not standalone), so a single
 rebuild command handles both system and user configuration.
 
+The `nullrunner` host enables Docker for local benchmark environments that
+require the real Docker CLI and Compose behavior. The daemon is disabled at
+boot and starts through socket activation when used. The `westonw` account is
+in the root-equivalent `docker` group; do not expose the Docker socket or run
+unreviewed host-authority benchmark drivers.
+
 ## Version Control
 
 This repository uses **Jujutsu (`jj`)**, colocated with Git for repository

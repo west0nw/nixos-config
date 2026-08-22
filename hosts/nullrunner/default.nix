@@ -112,11 +112,19 @@
   networking.hostName = "nullrunner";
   networking.networkmanager.enable = true;
 
+  # Harbor and Pier require the Docker CLI and Compose semantics for local
+  # benchmark environments. Keep the daemon off until a benchmark requests it.
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
+
   # Load amdgpu early for both GPUs
   hardware.amdgpu.initrd.enable = true;
 
   # User
   users.users.westonw.extraGroups = [
+    "docker"
     "video"
     "lp"
     "plugdev"
