@@ -83,6 +83,24 @@ let
     done
   '';
 
+  protonVpnAutostart = pkgs.writeShellScript "proton-vpn-autostart" ''
+    app_config="''${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN/app-config.json"
+    ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$app_config")"
+
+    if [ -f "$app_config" ]; then
+      ${pkgs.jq}/bin/jq \
+        '.connect_at_app_startup = "FASTEST" | .start_app_minimized = true' \
+        "$app_config" > "$app_config.tmp"
+    else
+      ${pkgs.jq}/bin/jq -n \
+        '{tray_pinned_servers: [], connect_at_app_startup: "FASTEST", start_app_minimized: true}' \
+        > "$app_config.tmp"
+    fi
+    ${pkgs.coreutils}/bin/mv "$app_config.tmp" "$app_config"
+
+    exec ${pkgs.protonvpn-gui}/bin/protonvpn-app
+  '';
+
 in
 {
   wayland.windowManager.hyprland = {
@@ -355,6 +373,7 @@ in
 
       # ── Autostart ───────────────────────────────────────────────────────────────
       exec-once = [
+        "${protonVpnAutostart}"
         "waybar"
         "swaync"
         "swww-daemon && sleep 1 && swww img ${wallpapersDir}/train-sideview.png"
