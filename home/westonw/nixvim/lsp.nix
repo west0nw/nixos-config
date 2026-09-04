@@ -156,7 +156,7 @@
     extraPackages = with pkgs; [
       nixfmt
       prettierd
-      nodePackages.prettier
+      prettier
       stylua
       shfmt
     ];
