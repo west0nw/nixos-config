@@ -6,8 +6,8 @@
 }:
 
 let
-  codex = inputs.nixpkgs-codex.legacyPackages.${pkgs.system}.codex;
-  opencode = inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode;
+  codex = inputs.nixpkgs-codex.legacyPackages.${pkgs.stdenv.hostPlatform.system}.codex;
+  opencode = inputs.nixpkgs-opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode;
   opencodeVersion = builtins.head (lib.splitString "+" opencode.version);
   sleevEnabled = true;
   sleev = pkgs.stdenvNoCC.mkDerivation {
@@ -185,7 +185,7 @@ in
     cliphist
     grim
     slurp
-    swww
+    awww
     brightnessctl
     hyprshot
 
@@ -215,7 +215,7 @@ in
 
     # Torrenting and VPN
     qbittorrent
-    protonvpn-gui
+    proton-vpn
 
     # Coding agent
     opencode
@@ -374,7 +374,7 @@ in
     ];
   };
 
-  # Disable hyprpaper so swww can manage wallpapers
+  # Disable hyprpaper so awww can manage wallpapers
   services.hyprpaper.enable = lib.mkForce false;
 
   # Let home-manager manage itself

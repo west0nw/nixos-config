@@ -45,7 +45,7 @@ let
 
       # Check if file exists and set wallpaper
       if [ -f "${wallpapersDir}/$choice" ]; then
-        ${pkgs.swww}/bin/swww img "${wallpapersDir}/$choice" \
+        ${pkgs.awww}/bin/awww img "${wallpapersDir}/$choice" \
           --transition-type grow \
           --transition-pos 0.5,0.5 \
           --transition-duration 0.8 \
@@ -71,7 +71,7 @@ let
       ${pkgs.jq}/bin/jq '.start_app_minimized = false' "$app_config" > "$app_config.tmp"
       mv "$app_config.tmp" "$app_config"
     fi
-    ${pkgs.protonvpn-gui}/bin/protonvpn-app >/dev/null 2>&1 &
+    ${pkgs.proton-vpn}/bin/protonvpn-app >/dev/null 2>&1 &
 
     for _ in $(seq 1 50); do
       if ${pkgs.hyprland}/bin/hyprctl clients -j \
@@ -98,13 +98,14 @@ let
     fi
     ${pkgs.coreutils}/bin/mv "$app_config.tmp" "$app_config"
 
-    exec ${pkgs.protonvpn-gui}/bin/protonvpn-app
+    exec ${pkgs.proton-vpn}/bin/protonvpn-app
   '';
 
 in
 {
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "hyprlang";
 
     settings = {
       # ── Monitors ────────────────────────────────────────────────────────────────
@@ -209,7 +210,6 @@ in
 
       # ── Layouts ──────────────────────────────────────────────────────────────────
       dwindle = {
-        pseudotile = true;
         preserve_split = true;
       };
 
@@ -265,7 +265,7 @@ in
         "$mod, F, fullscreen, 0"
         "$mod, V, togglefloating,"
         "$mod, P, pseudo,"
-        "$mod, S, togglesplit,"
+        "$mod, S, layoutmsg, togglesplit"
 
         # Focus (vim-style)
         "$mod, H, movefocus, l"
@@ -375,8 +375,7 @@ in
       exec-once = [
         "${protonVpnAutostart}"
         "waybar"
-        "swaync"
-        "swww-daemon && sleep 1 && swww img ${wallpapersDir}/train-sideview.png"
+        "awww-daemon && sleep 1 && awww img ${wallpapersDir}/train-sideview.png"
         "wl-paste --type text --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
         "hypridle"
