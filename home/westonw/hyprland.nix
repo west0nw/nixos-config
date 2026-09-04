@@ -375,7 +375,8 @@ in
       exec-once = [
         "${protonVpnAutostart}"
         "waybar"
-        "awww-daemon && sleep 1 && awww img ${wallpapersDir}/train-sideview.png"
+        "awww-daemon"
+        "sleep 1 && awww img ${wallpapersDir}/train-sideview.png"
         "wl-paste --type text --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
         "hypridle"

@@ -111,6 +111,8 @@
 
   networking.hostName = "nullrunner";
   networking.networkmanager.enable = true;
+  # The MT7925's power saving can trigger AP inactivity disconnects on Wi-Fi 7 MLO.
+  networking.networkmanager.wifi.powersave = false;
 
   # Harbor and Pier require the Docker CLI and Compose semantics for local
   # benchmark environments. Keep the daemon off until a benchmark requests it.
