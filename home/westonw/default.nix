@@ -227,6 +227,20 @@ in
     sleev
   ];
 
+  # ChatGPT advertises itself as an HTTP handler, so keep OAuth links opening
+  # in the browser rather than looping back into the app.
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "text/html" = "vivaldi-stable.desktop";
+      "x-scheme-handler/http" = "vivaldi-stable.desktop";
+      "x-scheme-handler/https" = "vivaldi-stable.desktop";
+      "x-scheme-handler/discord" = "vesktop.desktop";
+      "x-scheme-handler/opencode" = "ai.opencode.desktop.desktop";
+      "x-scheme-handler/codex" = "chatgpt.desktop";
+    };
+  };
+
   # OpenCode is updated through the flake input, never its curl-based self-updater.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON (
     {

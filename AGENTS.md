@@ -292,7 +292,9 @@ binary and runtime fixes it needs. Its wrapper honors the desktop-wide
 `NIXOS_OZONE_WL` setting and launches through native Wayland with Wayland IME
 and window decoration flags. Update the `llm-agents` input to pick up new app
 releases rather than adding a second local package or using the macOS-only
-`pkgs.chatgpt` derivation.
+`pkgs.chatgpt` derivation. Keep Vivaldi's explicit HTTP/HTTPS MIME defaults:
+ChatGPT's upstream desktop entry also advertises those handlers and otherwise
+captures its own OAuth URL instead of opening the sign-in page in the browser.
 
 ### OpenCode Packaging
 
