@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # Graphics
@@ -32,7 +37,7 @@
   systemd.user.services.polkit-agent = {
     description = "Polkit authentication agent";
     wantedBy = [ "graphical-session.target" ];
-    wants = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";
@@ -59,29 +64,15 @@
     });
   '';
 
-  # Enable fingerprint for login (greetd), sudo, and hyprlock
-  # Password comes first so typing it authenticates immediately
-  # Fingerprint works as fallback if password is empty/wrong
+  # Keep password-first authentication without replacing NixOS's account/session rules.
   security.pam.services.greetd.fprintAuth = true;
   security.pam.services.sudo = {
     fprintAuth = true;
-    text = ''
-      auth sufficient pam_unix.so likeauth nullok try_first_pass
-      auth sufficient ${pkgs.fprintd}/lib/security/pam_fprintd.so
-      account required pam_unix.so
-      password sufficient pam_unix.so nullok yescrypt
-      session required pam_unix.so
-    '';
+    rules.auth.fprintd.order = config.security.pam.services.sudo.rules.auth.unix.order + 10;
   };
   security.pam.services.hyprlock = {
     fprintAuth = true;
-    text = ''
-      auth sufficient pam_unix.so likeauth nullok try_first_pass
-      auth sufficient ${pkgs.fprintd}/lib/security/pam_fprintd.so
-      account required pam_unix.so
-      password sufficient pam_unix.so nullok yescrypt
-      session required pam_unix.so
-    '';
+    rules.auth.fprintd.order = config.security.pam.services.hyprlock.rules.auth.unix.order + 10;
   };
 
   # Audio

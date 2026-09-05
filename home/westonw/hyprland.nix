@@ -8,8 +8,6 @@
 let
   colors = config.lib.stylix.colors;
 
-  wallpapersDir = "$HOME/nixos-config/wallpapers";
-
   powerMenu = pkgs.writeShellScript "power-menu" ''
     choice=$(echo -e "Shutdown\nReboot\nCancel" | wofi --dmenu --prompt "Power Menu" --width 300 --height 200)
 
@@ -23,82 +21,6 @@ let
         [ "$confirm" = "Yes" ] && systemctl reboot
         ;;
     esac
-  '';
-
-  wallpaperSwitcher = pkgs.writeShellScript "wallpaper-switcher" ''
-    # Define wallpapers with friendly names
-    wallpapers="lit-up-sky.png|Night Sky
-    train-sideview.png|Train Sideview
-    minimalist-black-hole.png|Black Hole
-    pixel-car.png|Pixel Car
-    pixel-galaxy.png|Pixel Galaxy
-    satellite.png|Satellite
-    space.png|Deep Space
-    voyager-17.jpg|Voyager"
-
-    # Show selection menu - display friendly names only
-    selected=$(echo "$wallpapers" | ${pkgs.wofi}/bin/wofi --dmenu --prompt "Select Wallpaper" --insensitive --matching fuzzy --width 400 --height 300)
-
-    if [ -n "$selected" ]; then
-      # Extract filename from selection
-      choice=$(echo "$selected" | cut -d'|' -f1 | tr -d '[:space:]')
-
-      # Check if file exists and set wallpaper
-      if [ -f "${wallpapersDir}/$choice" ]; then
-        ${pkgs.awww}/bin/awww img "${wallpapersDir}/$choice" \
-          --transition-type grow \
-          --transition-pos 0.5,0.5 \
-          --transition-duration 0.8 \
-          --transition-fps 60 \
-          --transition-step 45 \
-          --filter Nearest
-      fi
-    fi
-  '';
-
-  vpnToggle = pkgs.writeShellScript "vpn-toggle" ''
-    app_config="''${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN/app-config.json"
-
-    if ${pkgs.hyprland}/bin/hyprctl clients -j \
-      | ${pkgs.jq}/bin/jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
-      ${pkgs.hyprland}/bin/hyprctl dispatch togglespecialworkspace vpn
-      exit
-    fi
-
-    # Proton 4.14 can keep a tray-only process that cannot recreate its window.
-    ${pkgs.procps}/bin/pkill -9 -f '/bin/.protonvpn-app-wrapped' 2>/dev/null || true
-    if [ -f "$app_config" ]; then
-      ${pkgs.jq}/bin/jq '.start_app_minimized = false' "$app_config" > "$app_config.tmp"
-      mv "$app_config.tmp" "$app_config"
-    fi
-    ${pkgs.proton-vpn}/bin/protonvpn-app >/dev/null 2>&1 &
-
-    for _ in $(seq 1 50); do
-      if ${pkgs.hyprland}/bin/hyprctl clients -j \
-        | ${pkgs.jq}/bin/jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
-        ${pkgs.hyprland}/bin/hyprctl dispatch togglespecialworkspace vpn
-        exit
-      fi
-      sleep 0.1
-    done
-  '';
-
-  protonVpnAutostart = pkgs.writeShellScript "proton-vpn-autostart" ''
-    app_config="''${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN/app-config.json"
-    ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$app_config")"
-
-    if [ -f "$app_config" ]; then
-      ${pkgs.jq}/bin/jq \
-        '.connect_at_app_startup = "FASTEST" | .start_app_minimized = true' \
-        "$app_config" > "$app_config.tmp"
-    else
-      ${pkgs.jq}/bin/jq -n \
-        '{tray_pinned_servers: [], connect_at_app_startup: "FASTEST", start_app_minimized: true}' \
-        > "$app_config.tmp"
-    fi
-    ${pkgs.coreutils}/bin/mv "$app_config.tmp" "$app_config"
-
-    exec ${pkgs.proton-vpn}/bin/protonvpn-app
   '';
 
 in
@@ -242,9 +164,7 @@ in
       "$mod" = "SUPER";
       "$terminal" = "ghostty";
       "$menu" = "wofi --show drun";
-      "$wallpaper" = "${wallpaperSwitcher}";
       "$power" = "${powerMenu}";
-      "$vpn" = "${vpnToggle}";
 
       # ── Keybindings ─────────────────────────────────────────────────────────────
       bind = [
@@ -373,13 +293,8 @@ in
 
       # ── Autostart ───────────────────────────────────────────────────────────────
       exec-once = [
-        "${protonVpnAutostart}"
-        "waybar"
-        "awww-daemon"
-        "sleep 1 && awww img ${wallpapersDir}/train-sideview.png"
         "wl-paste --type text --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
-        "hypridle"
       ];
     };
   };

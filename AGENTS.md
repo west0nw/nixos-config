@@ -7,14 +7,18 @@ machines owned by user **westonw**:
 - **nullrunner** - Framework 16-inch AMD AI 300 series laptop (desktop role)
 - **scar** - ASUS laptop repurposed as a home server (headless role)
 
-The configuration is written in the **Nix language**. The only application
-source file is a dependency-free JavaScript plugin for OpenCode; it has no
-separate build system or package manager.
+The configuration is written in the **Nix language**. The custom OpenCode plugin is dependency-free JavaScript. Desktop helper scripts
+are ordinary Bash files packaged with `writeShellApplication`. Focused Python
+regression tests and ShellCheck run through the flake; there is no separate package manager.
 
 ## Architecture
 
 ```
-flake.nix                        # Entrypoint: inputs + outputs for nullrunner + scar
+flake.nix                        # Hosts, pinned dev shell, formatter, script checks
+README.md                        # Maintenance and troubleshooting guide
+docs/audit-2026-09-05.md          # Audit findings and remaining verification limits
+packages/godot.nix               # Official Godot binary derivation used by the host overlay
+tests/test_desktop_scripts.py    # Isolated Wi-Fi menu and VPN config regression tests
 hosts/
   nullrunner/
     default.nix                  # Framework host-specific settings
@@ -33,7 +37,13 @@ modules/
     minecraft.nix                # Headless Minecraft server module (enabled on scar)
 wallpapers/                      # Wallpaper images (committed directly, no LFS)
 home/westonw/
-  default.nix                    # Home Manager desktop profile for nullrunner
+  default.nix                    # Desktop imports, ordinary packages, browser, shell
+  blender.nix                    # Prebuilt Blender, addon, MCP server integration
+  codex.nix                      # Codex CLI, ChatGPT desktop, bubblewrap dependency
+  godot.nix                      # Native Wayland wrapper and launcher
+  vpn.nix                        # Proton startup/toggle and qBittorrent interface
+  wallpaper.nix                  # Store-backed switcher and awww user service
+  scripts/                       # ShellCheck-validated Wi-Fi, Bluetooth, and Proton helpers
   server.nix                     # Home Manager headless profile for scar
   hyprland.nix                   # Hyprland window manager settings
   hyprlock.nix                   # Lock screen + idle daemon config
@@ -42,6 +52,7 @@ home/westonw/
   swaync.nix                     # Notification daemon config (replaces mako)
   spicetify.nix                  # Spotify theming via Spicetify
   opencode/
+    default.nix                  # CLI/Desktop packaging, native HM settings, Sleev, skills
     AGENTS.md                    # Global OpenCode instructions deployed by Home Manager
     plugins/
       goal.js                    # Private persistent goal-loop plugin
@@ -89,6 +100,7 @@ existing style.
 ## Build / Rebuild Commands
 
 There is no Makefile, justfile, or CI pipeline. All operations use Nix CLI.
+`nix develop` provides pinned nixfmt, ShellCheck, Node, Python, jj, and ripgrep.
 
 **Rebuild commands require `sudo` and will not work in agent sandboxes.**
 The user will run these manually. Agents should focus on editing files
@@ -111,7 +123,7 @@ sudo nixos-rebuild dry-build --flake ~/nixos-config#scar
 ### Validation commands agents CAN run
 
 ```bash
-# Check flake evaluation -- catches syntax errors, missing files, type mismatches
+# Evaluate both hosts, lint helper scripts, check plugin syntax, run regressions
 nix flake check
 
 # Update all flake inputs to latest versions
@@ -120,19 +132,21 @@ nix flake update --flake ~/nixos-config
 # Update a single flake input (preferred over deprecated lock --update-input alias)
 nix flake update home-manager --flake ~/nixos-config
 
-# Format all Nix files (if formatter is wired into flake outputs)
+# Format all Nix files except generated hardware configuration
 nix fmt
+nix fmt -- --check
 ```
 
 **Use `nix flake check` as your primary validation step after making changes.**
-There is no test framework. The real "test" is a successful `nixos-rebuild switch`,
-but `nix flake check` catches most errors without requiring sudo.
+The `desktop-scripts` check runs ShellCheck, a plugin syntax check, and isolated
+Python regression tests without changing network or desktop state. A successful
+`nixos-rebuild switch` and interactive checks are still needed for runtime behavior.
 
 ## Formatting
 
 - **Formatter:** `nixfmt` (the official RFC 166 Nix formatter). Configured in
   the editor via nixd LSP and conform-nvim for format-on-save.
-- **No standalone linters** (statix, deadnix) are configured in the repo.
+- **ShellCheck** validates the desktop Bash helpers; statix/deadnix are not configured.
 - **No `.editorconfig`**, treefmt config, or pre-commit hooks exist.
 
 ## Code Style Guidelines
@@ -147,7 +161,7 @@ but `nix flake check` catches most errors without requiring sudo.
 
 ### Module Function Signature
 
-Every `.nix` file (except `flake.nix`) uses the standard NixOS/Home Manager
+NixOS/Home Manager modules use the standard NixOS/Home Manager
 module pattern with this argument order:
 
 ```nix
@@ -160,6 +174,9 @@ Add `inputs` after `lib` only when flake inputs are needed:
 { config, pkgs, lib, inputs, ... }:
 ```
 
+Package expressions under `packages/` take their required package arguments; they
+are not NixOS modules. Keep host overlays small and put substantial derivations there.
+
 ### Imports
 
 Place `imports` as the first attribute in the returned attribute set.
@@ -167,10 +184,10 @@ One import per line, grouped by category with comments:
 
 ```nix
 imports = [
-    # Desktop environment (Phase 5)
+    # Desktop environment
     ./hyprland.nix
     ./waybar.nix
-    # Editor (Phase 6)
+    # Editor
     inputs.nixvim.homeModules.nixvim
     ./nixvim
 ];
@@ -271,22 +288,23 @@ may still select X11 when their launcher uses automatic backend detection. For
 apps known to render incorrectly, use an app-specific wrapper with an explicit
 native Wayland argument rather than global font, DPI, or resolution hacks.
 
-Godot is wrapped as `godotWayland` in `home/westonw/default.nix`. Preserve its
+Godot is wrapped as `godotWayland` in `home/westonw/godot.nix`. Preserve its
 Wayland environment and launch flags when updating or reorganizing packages.
-Godot 4.7.1 uses the official prebuilt Linux binary through the `nixpkgs`
-overlay in `hosts/nullrunner/default.nix`. Keep the release URL, fixed-output
+Godot 4.7.1 uses the official prebuilt Linux binary through the `packages/godot.nix`
+derivation imported by the overlay in `hosts/nullrunner/default.nix`. Keep the release URL, fixed-output
 hash, runtime dependencies, and `godot4` compatibility symlink in sync when
 updating it.
 
 Blender 5.2 also uses the official prebuilt Linux archive in
-`home/westonw/default.nix`. Its previous source build exhausted the laptop's
+`home/westonw/blender.nix`. Its previous source build exhausted the laptop's
 32 GB of RAM with 12 parallel Ninja workers and caused the desktop-wide OOM
 failure. The Berkeley OCF mirror is used because `download.blender.org` presents
 a Cloudflare challenge to Nix. Preserve its archive hash, bundled library
 layout, runtime library path, MCP wrapper, and native Wayland behavior when
 updating it.
 
-The official unified ChatGPT/Codex desktop app comes from the `llm-agents`
+The official unified ChatGPT/Codex desktop app is configured in
+`home/westonw/codex.nix` and comes from the `llm-agents`
 flake, which repackages OpenAI's Linux `.deb` and applies the NixOS-specific
 binary and runtime fixes it needs. Its wrapper honors the desktop-wide
 `NIXOS_OZONE_WL` setting and launches through native Wayland with Wayland IME
@@ -295,8 +313,15 @@ releases rather than adding a second local package or using the macOS-only
 `pkgs.chatgpt` derivation. Keep Vivaldi's explicit HTTP/HTTPS MIME defaults:
 ChatGPT's upstream desktop entry also advertises those handlers and otherwise
 captures its own OAuth URL instead of opening the sign-in page in the browser.
+Keep `bubblewrap` in the desktop user profile: the desktop runtime discovers
+`bwrap` on PATH, while the upstream Codex CLI only supplies it to its own wrapper.
 
 ### OpenCode Packaging
+
+Packaging and settings live in `home/westonw/opencode/default.nix`. Use the native
+`programs.opencode.settings` attribute set so other modules can contribute MCP
+settings; the Blender integration lives in `home/westonw/blender.nix`. Local MCP
+environment variables use the `environment` key, not `env`.
 
 The `nixpkgs-opencode` input is pinned to an upstream OpenCode release tag. The
 CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`, which
@@ -345,7 +370,7 @@ sync. A flake input pinned to an exact tag does not advance merely by running
 2. Update the input with `nix flake update nixpkgs-opencode --flake ~/nixos-config`.
 3. Prefetch the matching `opencode-desktop-linux-x86_64.AppImage` with
    `nix store prefetch-file --json <release-asset-url>`.
-4. Replace the AppImage hash in `home/westonw/default.nix` with the returned hash.
+4. Replace the AppImage hash in `home/westonw/opencode/default.nix` with the returned hash.
 5. Run `nix flake check` and build the Home Manager activation package so the
    desktop application itself is tested, not only evaluated:
 
@@ -355,8 +380,8 @@ nix build --no-link \
 ```
 
 OpenCode's optional Sleev routing is controlled by `sleevEnabled` in
-`home/westonw/default.nix`; keep it disabled until `sleev gateway status` is
-healthy. The Sleev CLI is packaged from its official `sleev-linux-x64` npm
+`home/westonw/opencode/default.nix`. It is enabled; `sleev gateway status` was
+healthy during the September 2026 audit. Keep routing contingent on a healthy gateway. The Sleev CLI is packaged from its official `sleev-linux-x64` npm
 tarball and pinned by version and hash. Update those together rather than using
 `sleev upgrade`, which cannot replace the immutable Nix store CLI. Sleev's
 upstream gateway is dynamically linked, so `nullrunner` enables `programs.nix-ld`
@@ -378,15 +403,26 @@ and committed directly (LFS is not used -- typical wallpapers are well under
 1 MB). The active wallpaper is set in `modules/roles/desktop.nix`
 via `stylix.image = ../../wallpapers/<filename>;`.
 
-A **wallpaper switcher** is available via `Super+Shift+W` (defined in
-`hyprland.nix`). It uses wofi to present a menu of all wallpapers with
-nice animations when switching. The switcher is also defined as a Nix
-expression (using `pkgs.writeShellScript`) embedded in `hyprland.nix`.
+A **wallpaper switcher** is available via `Super+Shift+W`. Its implementation in
+`home/westonw/wallpaper.nix` discovers images from the Nix store and switches with
+awww animations. The awww service waits for its socket and uses `config.stylix.image`
+at startup. Waybar, awww, and hypridle each have one systemd owner; do not launch
+them again through Hyprland `exec-once`.
+
+### Desktop Networking
+
+Nullrunner records NetworkManager connection transitions at INFO level. Its Wi-Fi
+menu parses SSIDs as the final unescaped field, collapses duplicate names, and
+uses saved credentials before asking for a password. The menu chooses an SSID,
+not a specific BSSID or frequency band. Proton scripts and their runtime packages
+live in `vpn.nix` and `scripts/`; preserve the tray-only process workaround until
+it is verified unnecessary. See README.md for read-only diagnostic commands.
 
 ### File and Directory Naming
 
 - All lowercase. Hyphens as separators where needed: `hardware-configuration.nix`
-- Each directory has a `default.nix` as its entry point (idiomatic Nix).
+- Module directories use `default.nix` as their entry point; `packages/`, `scripts/`,
+  `tests/`, and `docs/` contain standalone files.
 - Host directories named after hostname: `hosts/nullrunner/`, `hosts/scar/`
 - User directories named after username: `home/westonw/`
 - Application configs named after the application: `hyprland.nix`, `waybar.nix`
@@ -394,8 +430,11 @@ expression (using `pkgs.writeShellScript`) embedded in `hyprland.nix`.
 
 ### Error Handling
 
-No explicit error handling. The NixOS module system provides validation.
-No `assert`, `throw`, or `builtins.abort` usage.
+The NixOS module system provides option validation. Desktop scripts use strict
+Bash error handling; VPN preference updates use temporary files and only replace
+validly processed JSON. Keep externally supplied Wi-Fi/Bluetooth names out of
+arithmetic and render them as plain text. Add focused regressions for script bugs.
+No `assert`, `throw`, or `builtins.abort` usage in Nix modules.
 
 ## Critical Warnings
 

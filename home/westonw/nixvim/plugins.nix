@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.nixvim.plugins = {
@@ -6,7 +11,11 @@
     telescope = {
       enable = true;
       settings.defaults = {
-        file_ignore_patterns = [ "node_modules" ".git/" "target/" ];
+        file_ignore_patterns = [
+          "node_modules"
+          ".git/"
+          "target/"
+        ];
         layout_strategy = "horizontal";
         layout_config = {
           horizontal = {
@@ -46,8 +55,14 @@
       enable = true;
       settings.options = {
         theme = "catppuccin";
-        section_separators = { left = ""; right = ""; };
-        component_separators = { left = ""; right = ""; };
+        section_separators = {
+          left = "";
+          right = "";
+        };
+        component_separators = {
+          left = "";
+          right = "";
+        };
       };
     };
 
@@ -74,11 +89,21 @@
         current_line_blame = true;
         current_line_blame_opts.delay = 500;
         signs = {
-          add = { text = "▎"; };
-          change = { text = "▎"; };
-          delete = { text = ""; };
-          topdelete = { text = ""; };
-          changedelete = { text = "▎"; };
+          add = {
+            text = "▎";
+          };
+          change = {
+            text = "▎";
+          };
+          delete = {
+            text = "";
+          };
+          topdelete = {
+            text = "";
+          };
+          changedelete = {
+            text = "▎";
+          };
         };
       };
     };
@@ -109,10 +134,32 @@
         highlight.enable = true;
         indent.enable = true;
         ensure_installed = [
-          "nix" "rust" "python" "typescript" "javascript" "tsx"
-          "go" "c" "cpp" "lua" "bash" "zig" "java" "dart"
-          "svelte" "html" "css" "json" "yaml" "toml" "markdown"
-          "markdown_inline" "vim" "vimdoc" "query" "regex"
+          "nix"
+          "rust"
+          "python"
+          "typescript"
+          "javascript"
+          "tsx"
+          "go"
+          "c"
+          "cpp"
+          "lua"
+          "bash"
+          "zig"
+          "java"
+          "dart"
+          "svelte"
+          "html"
+          "css"
+          "json"
+          "yaml"
+          "toml"
+          "markdown"
+          "markdown_inline"
+          "vim"
+          "vimdoc"
+          "query"
+          "regex"
           "odin"
         ];
       };

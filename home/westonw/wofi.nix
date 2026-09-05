@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   colors = config.lib.stylix.colors;
@@ -6,7 +11,8 @@ let
   fonts = config.stylix.fonts;
 
   # Helper: build "rgba(r, g, b, a)" from a base16 color name and alpha string
-  rgba = color: alpha:
+  rgba =
+    color: alpha:
     "rgba(${colors."${color}-rgb-r"}, ${colors."${color}-rgb-g"}, ${colors."${color}-rgb-b"}, ${alpha})";
 in
 {

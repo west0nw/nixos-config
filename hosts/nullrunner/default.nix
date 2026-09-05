@@ -13,89 +13,9 @@
     ../../modules/roles/desktop.nix
   ];
 
-  # Nixpkgs has not yet packaged the 4.7.1 patch release. Use the official
-  # binary because compiling Godot locally exceeds this machine's memory.
+  # Use the official binary to avoid memory-heavy local Godot builds.
   nixpkgs.overlays = [
-    (
-      final: _:
-      let
-        version = "4.7.1";
-      in
-      {
-        godot = final.stdenvNoCC.mkDerivation {
-          pname = "godot-bin";
-          inherit version;
-
-          src = final.fetchurl {
-            url = "https://github.com/godotengine/godot/releases/download/${version}-stable/Godot_v${version}-stable_linux.x86_64.zip";
-            hash = "sha256-x/8U/ShHLI1PGTBD3jAnjc9+UkGh3PdWawLiet2qM7o=";
-          };
-
-          icon = final.fetchurl {
-            url = "https://raw.githubusercontent.com/godotengine/godot/${version}-stable/misc/logo/icon.svg";
-            hash = "sha256-FEOul0hCuBdl1bUOanKeu/Qeui6eUVqwkZ8upci49HU=";
-          };
-
-          nativeBuildInputs = with final; [
-            autoPatchelfHook
-            unzip
-          ];
-
-          buildInputs = [ final.glibc ];
-
-          # The portable binary loads these by name, so autoPatchelf cannot detect them.
-          runtimeDependencies = map final.lib.getLib (
-            with final;
-            [
-              alsa-lib
-              dbus
-              fontconfig
-              libdecor
-              libGL
-              libpulseaudio
-              libx11
-              libxcursor
-              libxext
-              libxfixes
-              libxi
-              libxinerama
-              libxkbcommon
-              libxrandr
-              libxrender
-              speechd-minimal
-              udev
-              vulkan-loader
-              wayland
-            ]
-          );
-
-          dontUnpack = true;
-
-          installPhase = ''
-            runHook preInstall
-
-            mkdir -p "$out/bin"
-            unzip -p "$src" Godot_v${version}-stable_linux.x86_64 > "$out/bin/godot"
-            chmod 0755 "$out/bin/godot"
-            ln -s godot "$out/bin/godot4"
-
-            install -Dm644 "$icon" \
-              "$out/share/icons/hicolor/scalable/apps/godot.svg"
-
-            runHook postInstall
-          '';
-
-          meta = {
-            description = "Godot game engine, official prebuilt binary";
-            homepage = "https://godotengine.org/";
-            license = final.lib.licenses.mit;
-            mainProgram = "godot";
-            platforms = [ "x86_64-linux" ];
-            sourceProvenance = [ final.lib.sourceTypes.binaryNativeCode ];
-          };
-        };
-      }
-    )
+    (final: _: { godot = import ../../packages/godot.nix { pkgs = final; }; })
   ];
 
   # Use the latest kernel - recommended for AI 300 series
@@ -111,6 +31,8 @@
 
   networking.hostName = "nullrunner";
   networking.networkmanager.enable = true;
+  # Record connection transitions so intermittent Wi-Fi/VPN failures can be diagnosed.
+  networking.networkmanager.logLevel = "INFO";
   # The MT7925's power saving can trigger AP inactivity disconnects on Wi-Fi 7 MLO.
   networking.networkmanager.wifi.powersave = false;
 

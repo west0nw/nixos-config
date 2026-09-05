@@ -1,4 +1,9 @@
-{ pkgs, spicetify-nix, lib, ... }:
+{
+  pkgs,
+  spicetify-nix,
+  lib,
+  ...
+}:
 
 let
   spicePkgs = spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};

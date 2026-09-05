@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.nixvim = {
@@ -10,21 +15,54 @@
         keymaps = {
           # Go-to keymaps
           lspBuf = {
-            "gd" = { action = "definition"; desc = "Go to definition"; };
-            "gD" = { action = "declaration"; desc = "Go to declaration"; };
-            "gi" = { action = "implementation"; desc = "Go to implementation"; };
-            "gr" = { action = "references"; desc = "Go to references"; };
-            "K" = { action = "hover"; desc = "Hover documentation"; };
-            "<leader>ca" = { action = "code_action"; desc = "Code action"; };
-            "<leader>rn" = { action = "rename"; desc = "Rename symbol"; };
-            "<leader>D" = { action = "type_definition"; desc = "Type definition"; };
+            "gd" = {
+              action = "definition";
+              desc = "Go to definition";
+            };
+            "gD" = {
+              action = "declaration";
+              desc = "Go to declaration";
+            };
+            "gi" = {
+              action = "implementation";
+              desc = "Go to implementation";
+            };
+            "gr" = {
+              action = "references";
+              desc = "Go to references";
+            };
+            "K" = {
+              action = "hover";
+              desc = "Hover documentation";
+            };
+            "<leader>ca" = {
+              action = "code_action";
+              desc = "Code action";
+            };
+            "<leader>rn" = {
+              action = "rename";
+              desc = "Rename symbol";
+            };
+            "<leader>D" = {
+              action = "type_definition";
+              desc = "Type definition";
+            };
           };
 
           # Diagnostic keymaps
           diagnostic = {
-            "[d" = { action = "goto_prev"; desc = "Previous diagnostic"; };
-            "]d" = { action = "goto_next"; desc = "Next diagnostic"; };
-            "<leader>dl" = { action = "open_float"; desc = "Line diagnostics"; };
+            "[d" = {
+              action = "goto_prev";
+              desc = "Previous diagnostic";
+            };
+            "]d" = {
+              action = "goto_next";
+              desc = "Next diagnostic";
+            };
+            "<leader>dl" = {
+              action = "open_float";
+              desc = "Line diagnostics";
+            };
           };
         };
 
@@ -116,6 +154,7 @@
       # ── Formatting ──────────────────────────────────────────────────────────
       conform-nvim = {
         enable = true;
+        autoInstall.enable = true;
 
         settings = {
           format_on_save = {
@@ -152,13 +191,7 @@
       };
     };
 
-    # Ensure formatter packages are available
-    extraPackages = with pkgs; [
-      nixfmt
-      prettierd
-      prettier
-      stylua
-      shfmt
-    ];
+    # rust-analyzer's check.command uses cargo clippy.
+    extraPackages = with pkgs; [ clippy ];
   };
 }

@@ -1,10 +1,16 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   colors = config.lib.stylix.colors;
   c = colors.withHashtag;
 
-  rgba = color: alpha:
+  rgba =
+    color: alpha:
     "rgba(${colors."${color}-rgb-r"}, ${colors."${color}-rgb-g"}, ${colors."${color}-rgb-b"}, ${alpha})";
 in
 {

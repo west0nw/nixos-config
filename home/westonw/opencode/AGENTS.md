@@ -1,7 +1,7 @@
 # OpenCode Configuration
 
 OpenCode's global configuration is managed declaratively by Home Manager in
-`~/nixos-config/home/westonw/default.nix`. Do not modify files under
+`~/nixos-config/home/westonw/opencode/default.nix`. Do not modify files under
 `~/.config/opencode/` directly. Make configuration changes in the NixOS
 configuration repository instead, then apply the Home Manager configuration.
 

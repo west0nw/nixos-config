@@ -68,7 +68,55 @@
       stylix,
       spicetify-nix,
     }@inputs:
+    let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    in
     {
+      # Repository tools are pinned with the system; no global installs are needed.
+      devShells.x86_64-linux.default = pkgs.mkShellNoCC {
+        packages = with pkgs; [
+          nixfmt
+          shellcheck
+          nodejs
+          python3
+          jujutsu
+          ripgrep
+        ];
+      };
+      formatter.x86_64-linux = pkgs.writeShellApplication {
+        name = "format-nix-config";
+        runtimeInputs = with pkgs; [
+          nixfmt
+          ripgrep
+          findutils
+        ];
+        text = ''
+          if (( $# > 0 )) && [[ "$1" != --* ]]; then
+            exec nixfmt "$@"
+          fi
+          rg --files --hidden -g '*.nix' -g '!hardware-configuration.nix' \
+            -g '!.git/**' -g '!.jj/**' -0 | xargs -0 -r nixfmt "$@"
+        '';
+      };
+      checks.x86_64-linux.desktop-scripts =
+        pkgs.runCommand "check-desktop-scripts"
+          {
+            nativeBuildInputs = with pkgs; [
+              bash
+              shellcheck
+              python3
+              jq
+              coreutils
+              nodejs
+            ];
+          }
+          ''
+            shellcheck ${./home/westonw/scripts}/*.sh
+            node --input-type=module --check < ${./home/westonw/opencode/plugins/goal.js}
+            python3 ${./tests/test_desktop_scripts.py} ${./home/westonw/scripts}
+            touch "$out"
+          '';
+
       nixosConfigurations.nullrunner = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };
         modules = [
