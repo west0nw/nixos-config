@@ -11,6 +11,12 @@
     # Current Codex CLI without updating the full system package set
     nixpkgs-codex.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # Official ChatGPT/Codex desktop app packaged for NixOS
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # OpenCode (latest from upstream flake)
     nixpkgs-opencode.url = "github:anomalyco/opencode/v1.18.3";
 
@@ -53,6 +59,7 @@
       self,
       nixpkgs,
       nixpkgs-codex,
+      llm-agents,
       nixpkgs-opencode,
       matt-pocock-skills,
       nixos-hardware,

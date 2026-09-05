@@ -7,6 +7,9 @@
 
 let
   codex = inputs.nixpkgs-codex.legacyPackages.${pkgs.stdenv.hostPlatform.system}.codex;
+  chatgpt = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt.override {
+    commandLineArgs = "--enable-features=WaylandWindowDecorations --enable-wayland-ime=true";
+  };
   opencode = inputs.nixpkgs-opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode;
   opencodeVersion = builtins.head (lib.splitString "+" opencode.version);
   sleevEnabled = true;
@@ -211,6 +214,7 @@ in
     mission-center
     blenderWithMcp
     libreoffice
+    chatgpt
     opencodeDesktopWayland
 
     # Torrenting and VPN

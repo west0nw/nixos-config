@@ -225,6 +225,7 @@ The following external inputs are used:
 
 - **nixpkgs** - Main package repository (nixos-unstable channel)
 - **nixpkgs-codex** - Separate nixpkgs pin for the current Codex CLI
+- **llm-agents** - NixOS packaging for the official ChatGPT/Codex desktop app
 - **nixpkgs-opencode** - OpenCode upstream flake (`github:anomalyco/opencode`)
   for the latest release, updated independently from nixpkgs
 - **matt-pocock-skills** - Non-flake source for Wayfinder and its required
@@ -284,6 +285,14 @@ failure. The Berkeley OCF mirror is used because `download.blender.org` presents
 a Cloudflare challenge to Nix. Preserve its archive hash, bundled library
 layout, runtime library path, MCP wrapper, and native Wayland behavior when
 updating it.
+
+The official unified ChatGPT/Codex desktop app comes from the `llm-agents`
+flake, which repackages OpenAI's Linux `.deb` and applies the NixOS-specific
+binary and runtime fixes it needs. Its wrapper honors the desktop-wide
+`NIXOS_OZONE_WL` setting and launches through native Wayland with Wayland IME
+and window decoration flags. Update the `llm-agents` input to pick up new app
+releases rather than adding a second local package or using the macOS-only
+`pkgs.chatgpt` derivation.
 
 ### OpenCode Packaging
 
