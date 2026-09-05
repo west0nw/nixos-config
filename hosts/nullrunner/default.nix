@@ -8,6 +8,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./wifi.nix
     ../../modules/common/base.nix
     ../../modules/common/user-westonw.nix
     ../../modules/roles/desktop.nix
@@ -30,11 +31,6 @@
   systemd.services.nix-daemon.serviceConfig.OOMScoreAdjust = 500;
 
   networking.hostName = "nullrunner";
-  networking.networkmanager.enable = true;
-  # Record connection transitions so intermittent Wi-Fi/VPN failures can be diagnosed.
-  networking.networkmanager.logLevel = "INFO";
-  # The MT7925's power saving can trigger AP inactivity disconnects on Wi-Fi 7 MLO.
-  networking.networkmanager.wifi.powersave = false;
 
   # Harbor and Pier require the Docker CLI and Compose semantics for local
   # benchmark environments. Keep the daemon off until a benchmark requests it.

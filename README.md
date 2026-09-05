@@ -19,6 +19,7 @@ Read [AGENTS.md](AGENTS.md) before editing. The
 | Godot launcher / binary packaging | `home/westonw/godot.nix` / `packages/godot.nix` |
 | VPN startup, VPN toggle, torrent interface | `home/westonw/vpn.nix` and `home/westonw/scripts/proton-vpn-*.sh` |
 | Wi-Fi / Bluetooth menus | `home/westonw/scripts/waybar-*-menu.sh` |
+| Laptop Wi-Fi driver workaround and diagnostics | `hosts/nullrunner/wifi.nix` |
 | Panel layout and appearance | `home/westonw/waybar.nix` |
 | Shortcuts, monitors, window rules | `home/westonw/hyprland.nix` |
 | Wallpaper startup and selection | `home/westonw/wallpaper.nix` |
@@ -100,6 +101,9 @@ Start by distinguishing the Wi-Fi link, internet connectivity, and VPN tunnel:
 nmcli general status
 nmcli device status
 ip -brief link
+iw dev wlp191s0 link
+iw dev wlp191s0 station dump
+iw dev wlp191s0 get power_save
 journalctl -b -u NetworkManager --since '15 minutes ago'
 journalctl -b -k --since '15 minutes ago'
 journalctl -b -u systemd-suspend.service -u systemd-logind --since '15 minutes ago'
@@ -111,6 +115,14 @@ available after a failure. Proton's log is at
 information before sharing logs. The Proton GUI running does not prove a VPN tunnel
 is connected. The qBittorrent interface remains `proton0`; verify that interface
 against an actual VPN connection before using torrents.
+
+Nullrunner has a temporary single-link workaround for the MT7925's silent Wi-Fi 7
+MLO stall. [The investigation](docs/wifi-2026-09-05.md) records the measured
+symptoms, scope, activation checks, and removal procedure. Restricting a saved
+profile to 5 GHz did **not** disable MLO on this system. Do not treat signal bars
+or a high negotiated link rate as proof that packets are flowing. Compare latency
+to the local gateway (shown by `nmcli -g IP4.GATEWAY device show wlp191s0`) with
+latency to the internet, and record whether a VPN is actually active.
 
 The Wi-Fi menu shows each SSID once, prioritizing a connected access point and then
 signal strength. NetworkManager chooses the matching connection/access point.
