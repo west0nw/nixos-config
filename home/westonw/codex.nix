@@ -19,4 +19,11 @@ in
     chatgpt
     pkgs.bubblewrap
   ];
+
+  # Keep Ember's direct connection scoped to its checkout. Proxy uses the
+  # hosted Linear plugin; OAuth credentials remain in Codex's mutable storage.
+  home.file."coding/web/ember_lighting/.codex/config.toml".text = ''
+    [mcp_servers.linear_ember]
+    url = "https://mcp.linear.app/mcp"
+  '';
 }

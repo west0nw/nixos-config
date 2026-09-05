@@ -93,6 +93,21 @@ input while diagnosing an unrelated problem: it adds variables to the diagnosis.
 
 ## Troubleshooting
 
+### Ember Linear connection
+
+Home Manager provides the Ember checkout's `.codex/config.toml` from
+`home/westonw/codex.nix`. After applying the configuration, authenticate once:
+
+```bash
+cd ~/coding/web/ember_lighting
+codex mcp login linear_ember
+```
+
+Select **Ember** on Linear's authorization screen, then restart the Codex task
+to load its tools. The existing Proxy plugin connection is separate. Credentials
+are stored by Codex outside this repository. Project configuration requires a
+trusted checkout; if the checkout moves, update its Home Manager target path.
+
 ### Wi-Fi and VPN
 
 Start by distinguishing the Wi-Fi link, internet connectivity, and VPN tunnel:

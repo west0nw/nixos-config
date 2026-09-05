@@ -318,6 +318,13 @@ captures its own OAuth URL instead of opening the sign-in page in the browser.
 Keep `bubblewrap` in the desktop user profile: the desktop runtime discovers
 `bwrap` on PATH, while the upstream Codex CLI only supplies it to its own wrapper.
 
+`codex.nix` also owns `~/coding/web/ember_lighting/.codex/config.toml`, containing
+the project-scoped `linear_ember` MCP connection. Proxy continues to use the hosted
+Linear plugin. Authenticate from the Ember checkout with `codex mcp login
+linear_ember` and select the Ember workspace. OAuth credentials stay in Codex's
+mutable auth storage, never in Nix or the repository. Global Codex settings remain
+app-managed; do not replace the global config with a Home Manager symlink.
+
 ### OpenCode Packaging
 
 Packaging and settings live in `home/westonw/opencode/default.nix`. Use the native
