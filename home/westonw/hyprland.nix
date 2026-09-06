@@ -234,8 +234,8 @@ in
         # Screenshot with hyprshot
         # Full screen to file
         ", Print, exec, hyprshot -m output -o ~/Pictures/Screenshots/"
-        # Region selection to clipboard
-        "SHIFT, Print, exec, hyprshot -m region --clipboard-only"
+        # Freeze first so the region overlay cannot race into the captured frame.
+        "SHIFT, Print, exec, hyprshot -m region --freeze --clipboard-only"
         # Active window to clipboard
         "CTRL, Print, exec, hyprshot -m window --clipboard-only"
         # Full screen to clipboard
