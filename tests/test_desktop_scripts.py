@@ -41,6 +41,16 @@ elif name == "wofi":
         print(next(row for row in rows if needle in row))
 elif name == "hyprctl":
     print("[]")
+elif name == "slurp":
+    if os.environ.get("TEST_SLURP_CANCEL") == "1":
+        sys.exit(1)
+    print(os.environ.get("TEST_GEOMETRY", "10,20 300x400"))
+elif name == "grim":
+    sys.stdout.buffer.write(b"PNG")
+elif name == "wl-copy":
+    sys.stdin.buffer.read()
+elif name in ("sleep", "notify-send"):
+    pass
 elif name in ("pkill", "protonvpn-app"):
     pass
 else:
@@ -55,7 +65,10 @@ class DesktopScripts(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.bin = self.root / "bin"
         self.bin.mkdir()
-        for name in ("nmcli", "wofi", "hyprctl", "pkill", "protonvpn-app"):
+        for name in (
+            "nmcli", "wofi", "hyprctl", "slurp", "grim", "wl-copy", "sleep",
+            "notify-send", "pkill", "protonvpn-app",
+        ):
             p = self.bin / name
             p.write_text(STUB.replace("#!PYTHON", "#!" + sys.executable))
             p.chmod(0o700)
@@ -109,6 +122,22 @@ class DesktopScripts(unittest.TestCase):
         result = self.run_script("waybar-network-menu.sh", "--status")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("62%", result.stdout)
+
+    def test_region_screenshot_waits_for_selector_to_disappear(self):
+        result = self.run_script("screenshot-region.sh")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.calls()
+        self.assertEqual(calls[:2], [["slurp", "-d"], ["sleep", "0.2"]])
+        self.assertCountEqual(calls[2:4], [
+            ["grim", "-g", "10,20 300x400", "-"],
+            ["wl-copy", "--type", "image/png"],
+        ])
+        self.assertEqual(calls[4][0], "notify-send")
+
+    def test_cancelled_region_screenshot_captures_nothing(self):
+        result = self.run_script("screenshot-region.sh", TEST_SLURP_CANCEL="1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [["slurp", "-d"]])
 
     def test_vpn_malformed_config_is_preserved_and_app_is_not_restarted(self):
         config = self.root / "config/Proton/VPN/app-config.json"

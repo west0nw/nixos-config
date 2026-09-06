@@ -23,6 +23,18 @@ let
     esac
   '';
 
+  screenshotRegion = pkgs.writeShellApplication {
+    name = "screenshot-region";
+    runtimeInputs = with pkgs; [
+      coreutils
+      grim
+      libnotify
+      slurp
+      wl-clipboard
+    ];
+    text = builtins.readFile ./scripts/screenshot-region.sh;
+  };
+
 in
 {
   wayland.windowManager.hyprland = {
@@ -165,6 +177,7 @@ in
       "$terminal" = "ghostty";
       "$menu" = "wofi --show drun";
       "$power" = "${powerMenu}";
+      "$screenshotRegion" = "${screenshotRegion}/bin/screenshot-region";
 
       # ── Keybindings ─────────────────────────────────────────────────────────────
       bind = [
@@ -234,8 +247,8 @@ in
         # Screenshot with hyprshot
         # Full screen to file
         ", Print, exec, hyprshot -m output -o ~/Pictures/Screenshots/"
-        # Freeze first so the region overlay cannot race into the captured frame.
-        "SHIFT, Print, exec, hyprshot -m region --freeze --clipboard-only"
+        # Region selection to clipboard
+        "SHIFT, Print, exec, $screenshotRegion"
         # Active window to clipboard
         "CTRL, Print, exec, hyprshot -m window --clipboard-only"
         # Full screen to clipboard

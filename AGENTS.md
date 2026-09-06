@@ -45,7 +45,7 @@ home/westonw/
   godot.nix                      # Native Wayland wrapper and launcher
   vpn.nix                        # Proton startup/toggle and qBittorrent interface
   wallpaper.nix                  # Store-backed switcher and awww user service
-  scripts/                       # ShellCheck-validated Wi-Fi, Bluetooth, and Proton helpers
+  scripts/                       # ShellCheck-validated screenshot, networking, and desktop helpers
   server.nix                     # Home Manager headless profile for scar
   hyprland.nix                   # Hyprland window manager settings
   hyprlock.nix                   # Lock screen + idle daemon config
