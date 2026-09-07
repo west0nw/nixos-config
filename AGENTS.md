@@ -318,19 +318,26 @@ captures its own OAuth URL instead of opening the sign-in page in the browser.
 Keep `bubblewrap` in the desktop user profile: the desktop runtime discovers
 `bwrap` on PATH, while the upstream Codex CLI only supplies it to its own wrapper.
 
+Home Manager owns the global `~/.codex/config.toml` through
+`programs.codex.settings` in `codex.nix`. This includes user preferences, trusted
+projects, enabled bundled plugins, and the desktop's `node_repl` MCP bridge. Derive
+the bridge's versioned paths from `chatgpt.unwrapped` and `chatgpt.version` so they
+advance with the `llm-agents` input. Other modules can contribute MCP servers to
+the same settings attribute set; `blender.nix` provides the global Blender server.
+Do not write secrets or OAuth credentials into these settings.
+
 `codex.nix` also owns `~/coding/web/ember_lighting/.codex/config.toml`, containing
 the project-scoped `linear_ember` MCP connection. Proxy continues to use the hosted
 Linear plugin. Authenticate from the Ember checkout with `codex mcp login
 linear_ember` and select the Ember workspace. OAuth credentials stay in Codex's
-mutable auth storage, never in Nix or the repository. Global Codex settings remain
-app-managed; do not replace the global config with a Home Manager symlink.
+mutable auth storage, never in Nix or the repository.
 
 ### OpenCode Packaging
 
 Packaging and settings live in `home/westonw/opencode/default.nix`. Use the native
 `programs.opencode.settings` attribute set so other modules can contribute MCP
-settings; the Blender integration lives in `home/westonw/blender.nix`. Local MCP
-environment variables use the `environment` key, not `env`.
+settings; the Blender integration lives in `home/westonw/blender.nix`. OpenCode
+uses `environment` for local MCP variables, while Codex uses `env`.
 
 The `nixpkgs-opencode` input is pinned to an upstream OpenCode release tag. The
 CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`, which

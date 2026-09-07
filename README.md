@@ -93,6 +93,13 @@ input while diagnosing an unrelated problem: it adds variables to the diagnosis.
 
 ## Troubleshooting
 
+### Blender MCP connection
+
+Home Manager configures the Blender MCP server globally for Codex and OpenCode
+from `home/westonw/blender.nix`. Start Blender normally before asking either agent
+to use its Blender tools; the packaged addon listens on `localhost:9876`. Restart
+the Codex task after applying a configuration change so it reloads the MCP catalog.
+
 ### Ember Linear connection
 
 Home Manager provides the Ember checkout's `.codex/config.toml` from

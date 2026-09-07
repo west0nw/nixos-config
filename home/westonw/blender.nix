@@ -122,4 +122,14 @@ in
       BLENDER_PATH = "${blenderWithMcp}/bin/blender";
     };
   };
+
+  programs.codex.settings.mcp_servers.blender = {
+    command = "${blenderMcp}/bin/blender-mcp";
+    enabled = true;
+    env = {
+      BLENDER_MCP_HOST = "localhost";
+      BLENDER_MCP_PORT = "9876";
+      BLENDER_PATH = "${blenderWithMcp}/bin/blender";
+    };
+  };
 }
