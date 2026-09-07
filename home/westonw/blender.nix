@@ -105,7 +105,10 @@ let
   };
 in
 {
-  home.packages = [ blenderWithMcp ];
+  home.packages = [
+    blenderWithMcp
+    blenderMcp
+  ];
 
   xdg.configFile."blender/5.2/extensions/user_default/mcp" = {
     source = "${blenderMcpSource}/addon/blender_mcp_addon";
@@ -123,13 +126,4 @@ in
     };
   };
 
-  programs.codex.settings.mcp_servers.blender = {
-    command = "${blenderMcp}/bin/blender-mcp";
-    enabled = true;
-    env = {
-      BLENDER_MCP_HOST = "localhost";
-      BLENDER_MCP_PORT = "9876";
-      BLENDER_PATH = "${blenderWithMcp}/bin/blender";
-    };
-  };
 }

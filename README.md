@@ -95,10 +95,11 @@ input while diagnosing an unrelated problem: it adds variables to the diagnosis.
 
 ### Blender MCP connection
 
-Home Manager configures the Blender MCP server globally for Codex and OpenCode
-from `home/westonw/blender.nix`. Start Blender normally before asking either agent
-to use its Blender tools; the packaged addon listens on `localhost:9876`. Restart
-the Codex task after applying a configuration change so it reloads the MCP catalog.
+NixOS configures the Blender MCP server for Codex in `/etc/codex/config.toml`,
+while Home Manager configures it for OpenCode and installs the shared server from
+`home/westonw/blender.nix`. Codex's `~/.codex/config.toml` stays writable so the
+desktop model and reasoning selectors can persist changes. Start Blender normally
+before asking either agent to use its tools; the addon listens on `localhost:9876`.
 
 ### Ember Linear connection
 

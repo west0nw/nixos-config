@@ -14,6 +14,22 @@
     ../../modules/roles/desktop.nix
   ];
 
+  # Keep shared MCP defaults declarative without making Codex's writable user
+  # preferences immutable. The user profile supplies both executables.
+  environment.etc."codex/config.toml".source =
+    (pkgs.formats.toml { }).generate "codex-system-config"
+      {
+        mcp_servers.blender = {
+          command = "/etc/profiles/per-user/westonw/bin/blender-mcp";
+          enabled = true;
+          env = {
+            BLENDER_MCP_HOST = "localhost";
+            BLENDER_MCP_PORT = "9876";
+            BLENDER_PATH = "/etc/profiles/per-user/westonw/bin/blender";
+          };
+        };
+      };
+
   # Use the official binary to avoid memory-heavy local Godot builds.
   nixpkgs.overlays = [
     (final: _: { godot = import ../../packages/godot.nix { pkgs = final; }; })

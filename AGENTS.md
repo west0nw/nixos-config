@@ -318,13 +318,15 @@ captures its own OAuth URL instead of opening the sign-in page in the browser.
 Keep `bubblewrap` in the desktop user profile: the desktop runtime discovers
 `bwrap` on PATH, while the upstream Codex CLI only supplies it to its own wrapper.
 
-Home Manager owns the global `~/.codex/config.toml` through
-`programs.codex.settings` in `codex.nix`. This includes user preferences, trusted
-projects, enabled bundled plugins, and the desktop's `node_repl` MCP bridge. Derive
-the bridge's versioned paths from `chatgpt.unwrapped` and `chatgpt.version` so they
-advance with the `llm-agents` input. Other modules can contribute MCP servers to
-the same settings attribute set; `blender.nix` provides the global Blender server.
-Do not write secrets or OAuth credentials into these settings.
+Codex's global `~/.codex/config.toml` must remain a regular writable file managed
+by the app. Model and reasoning selectors, trusted projects, bundled plugins, and
+the desktop's versioned `node_repl` bridge all persist there. Do not populate
+`programs.codex.settings`, because Home Manager would replace the file with an
+immutable store symlink and break those updates. The lower-precedence
+`/etc/codex/config.toml` in `hosts/nullrunner/default.nix` provides the declarative
+Blender MCP server without owning user preferences. `blender.nix` installs both
+the server and Blender wrappers at stable user-profile paths referenced there.
+Secrets and OAuth credentials remain in Codex's mutable auth storage, never in Nix.
 
 `codex.nix` also owns `~/coding/web/ember_lighting/.codex/config.toml`, containing
 the project-scoped `linear_ember` MCP connection. Proxy continues to use the hosted
@@ -337,7 +339,7 @@ mutable auth storage, never in Nix or the repository.
 Packaging and settings live in `home/westonw/opencode/default.nix`. Use the native
 `programs.opencode.settings` attribute set so other modules can contribute MCP
 settings; the Blender integration lives in `home/westonw/blender.nix`. OpenCode
-uses `environment` for local MCP variables, while Codex uses `env`.
+uses `environment` for local MCP variables. Codex's system MCP entry uses `env`.
 
 The `nixpkgs-opencode` input is pinned to an upstream OpenCode release tag. The
 CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`, which
