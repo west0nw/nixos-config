@@ -27,6 +27,8 @@ in
       allow_markup = true;
       insensitive = true;
       matching = "fuzzy";
+      # Hidden desktop-entry metadata makes weak fuzzy matches outrank exact app names.
+      drun-ignore_metadata = true;
       term = "ghostty";
     };
 
