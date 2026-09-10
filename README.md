@@ -190,8 +190,8 @@ Minecraft versions can migrate the world. Performance mods are not installed.
 Direct Ethernet access uses saved NetworkManager profiles: `scar-direct` on
 nullrunner (10.42.0.1, internet sharing) and `nullrunner-direct` on Scar
 (10.42.0.2, gateway 10.42.0.1). These profiles are stored on the machines, not in
-this flake. Activate `scar-direct` on nullrunner when using the cable; it does
-not autoconnect. Scar's profile reconnects automatically. Internet access through
+this flake. Both profiles reconnect automatically; `scar-direct` has priority
+100 so the generic wired profile does not replace it after Scar reboots. Internet access through
 this arrangement requires nullrunner to stay awake and connected to the internet.
 
 Connect with `ssh westonw@10.42.0.2`; join Minecraft from nullrunner at
