@@ -181,6 +181,26 @@ Authentication and gateway state stay outside this repository.
 
 ### Scar readiness
 
-Scar evaluates, but its hardware file is a placeholder. It is not ready to deploy
-until the target machine has a generated hardware configuration, account/SSH access,
-and Minecraft whitelist entries. Do not replace its hardware file from nullrunner.
+Scar's hardware file was copied unchanged from Scar on September 10, 2026.
+The server uses vanilla Java 1.21.11 (the pinned `minecraftServers.vanilla-1-21`
+package), a 2–4 GB Java heap, online authentication, and a whitelist containing
+FuriousFries. Review the package version before future nixpkgs updates; changing
+Minecraft versions can migrate the world. Performance mods are not installed.
+
+Direct Ethernet access uses saved NetworkManager profiles: `scar-direct` on
+nullrunner (10.42.0.1, internet sharing) and `nullrunner-direct` on Scar
+(10.42.0.2, gateway 10.42.0.1). These profiles are stored on the machines, not in
+this flake. Activate `scar-direct` on nullrunner when using the cable; it does
+not autoconnect. Scar's profile reconnects automatically. Internet access through
+this arrangement requires nullrunner to stay awake and connected to the internet.
+
+Connect with `ssh westonw@10.42.0.2`; join Minecraft from nullrunner at
+`10.42.0.2:25565` using Java 1.21.11. This setup does not publish the server to
+the internet or configure router port forwarding.
+
+Use `systemctl status minecraft-server` and `journalctl -u minecraft-server -f`
+over SSH to inspect the server. World data lives in `/var/lib/minecraft`.
+Whitelist changes belong in `modules/services/minecraft.nix`: console changes
+are temporary because NixOS manages the whitelist file. Stop the server before
+copying world data for a consistent backup, then start it again. Automated
+backups are not configured yet.

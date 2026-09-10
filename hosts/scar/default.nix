@@ -21,6 +21,9 @@
   users.users.westonw.extraGroups = [
     "minecraft"
   ];
+  users.users.westonw.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL5AKaAB/R/8KcJ6xgySHER5SjhXxAs6kQKvHFWTsLcA weston.wallace@outlook.com"
+  ];
 
   # Don't change this ever
   system.stateVersion = "25.11";
