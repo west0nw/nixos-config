@@ -55,6 +55,7 @@
     jq
     gh
     odin
+    lean4
     python3
     uv
 
