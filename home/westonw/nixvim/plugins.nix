@@ -54,7 +54,7 @@
     lualine = {
       enable = true;
       settings.options = {
-        theme = "catppuccin";
+        theme = "catppuccin-mocha";
         section_separators = {
           left = "";
           right = "";
