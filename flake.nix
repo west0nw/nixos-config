@@ -14,7 +14,7 @@
     # Official ChatGPT/Codex desktop app packaged for NixOS
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-codex";
     };
 
     # OpenCode (latest from upstream flake)

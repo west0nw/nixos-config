@@ -234,17 +234,19 @@ Omit `let` entirely when no local bindings are needed.
   forced onto native Wayland. Keep these wrappers minimal and app-specific.
 - Most flake inputs that depend on nixpkgs use `inputs.nixpkgs.follows = "nixpkgs"`.
 - Exceptions: `nixpkgs-codex` is a separate nixpkgs pin for current Codex CLI
-  releases, and `nixpkgs-opencode` is intentionally pinned to the upstream
-  `opencode` flake (`github:anomalyco/opencode`). Both can be updated
-  independently from the main system package set.
+  releases and the ChatGPT/Codex desktop app's build dependencies;
+  `nixpkgs-opencode` is intentionally pinned to the upstream `opencode` flake
+  (`github:anomalyco/opencode`). Both can be updated independently from the main
+  system package set.
 
 ### Flake Inputs
 
 The following external inputs are used:
 
 - **nixpkgs** - Main package repository (nixos-unstable channel)
-- **nixpkgs-codex** - Separate nixpkgs pin for the current Codex CLI
-- **llm-agents** - NixOS packaging for the official ChatGPT/Codex desktop app
+- **nixpkgs-codex** - Separate nixpkgs pin for current Codex packages
+- **llm-agents** - NixOS packaging for the official ChatGPT/Codex desktop app;
+  follows `nixpkgs-codex` so new app releases do not force a full system update
 - **nixpkgs-opencode** - OpenCode upstream flake (`github:anomalyco/opencode`)
   for the latest release, updated independently from nixpkgs
 - **matt-pocock-skills** - Non-flake source for Wayfinder and its required
@@ -257,7 +259,8 @@ The following external inputs are used:
 
 Most inputs that depend on nixpkgs use `follows` to ensure version consistency.
 `nixpkgs-codex` and `nixpkgs-opencode` are the exceptions: the former supplies
-the current Codex CLI, and the latter uses the upstream OpenCode flake directly.
+the current Codex CLI and the package set followed by `llm-agents`, while the
+latter uses the upstream OpenCode flake directly.
 
 ### Desktop Rendering and Fractional Scaling
 
