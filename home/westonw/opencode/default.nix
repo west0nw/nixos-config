@@ -7,8 +7,28 @@
 }:
 
 let
-  opencode = inputs.nixpkgs-opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode;
-  opencodeVersion = builtins.head (lib.splitString "+" opencode.version);
+  opencodeUpstream =
+    (inputs.nixpkgs-opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode).overrideAttrs
+      (_: {
+        # Upstream's completion generator runs after buildPhase changes into packages/cli.
+        # It fails in the sandbox because that directory has no "completion" child.
+        postInstall = "";
+      });
+  opencodeVersion = builtins.head (lib.splitString "+" opencodeUpstream.version);
+  opencode = pkgs.symlinkJoin {
+    name = "opencode-${opencodeVersion}-with-watcher";
+    paths = [ opencodeUpstream ];
+    buildInputs = [ pkgs.makeWrapper ];
+    meta = opencodeUpstream.meta;
+    postBuild = ''
+      for executable in opencode opencode2; do
+        wrapProgram $out/bin/$executable \
+          --set OPENCODE_PARCEL_WATCHER_PATH \
+            ${opencodeUpstream.node_modules}/packages/cli/node_modules/@parcel/watcher-linux-x64-glibc/watcher.node \
+          --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}
+      done
+    '';
+  };
   sleevEnabled = true;
   sleev = pkgs.stdenvNoCC.mkDerivation {
     pname = "sleev";
@@ -28,13 +48,13 @@ let
       runHook postInstall
     '';
   };
-  # The upstream desktop flake currently fails its Bun version check.
+  # Use the official release binary to avoid rebuilding Electron from source.
   opencodeDesktop = pkgs.appimageTools.wrapType2 {
     pname = "opencode-desktop";
     version = opencodeVersion;
     src = pkgs.fetchurl {
-      url = "https://github.com/anomalyco/opencode/releases/download/v${opencodeVersion}/opencode-desktop-linux-x86_64.AppImage";
-      hash = "sha256-DIDIQ3xK4HoH1ibrAEiye/AOGWiHjpBTibR11ZdbpOE=";
+      url = "https://opencode.ai/files/bin/${opencodeVersion}/opencode-desktop-linux-x86_64.AppImage";
+      hash = "sha256-YeAkjjg+8SjNdJtSPIOCCu4BO4Z/BKWsuf3jtyg05X0=";
     };
   };
 
@@ -57,6 +77,15 @@ in
     sleev
   ];
 
+  # Stylix emits V1 tui.json and theme tokens; V2 has a different CLI theme format.
+  stylix.targets.opencode.enable = false;
+  home.sessionVariables.OPENCODE_CLI_CONFIG_CONTENT = builtins.toJSON {
+    theme = {
+      name = "catppuccin";
+      mode = "dark";
+    };
+  };
+
   # OpenCode is updated through the flake input, never its curl-based self-updater.
   programs.opencode = {
     enable = true;
@@ -64,27 +93,27 @@ in
     settings = (
       {
         "$schema" = "https://opencode.ai/config.json";
-        autoupdate = false;
-        permission.external_directory = "allow";
-        agent.explore = {
-          model = "openai/gpt-5.6-terra";
-          variant = "low";
-        };
-        mcp.linear_ember = {
+        update = "disable";
+        permissions = [
+          {
+            action = "external_directory";
+            resource = "*";
+            effect = "allow";
+          }
+        ];
+        agents.explore.model = "openai/gpt-5.6-terra#low";
+        mcp.servers.linear_ember = {
           type = "remote";
           url = "https://mcp.linear.app/mcp";
-          enabled = true;
         };
-        mcp.linear_proxy = {
+        mcp.servers.linear_proxy = {
           type = "remote";
           url = "https://mcp.linear.app/mcp";
-          enabled = true;
         };
       }
       // lib.optionalAttrs sleevEnabled {
-        compaction.prune = false;
-        provider.openai.options = {
-          baseURL = "http://127.0.0.1:17321";
+        providers.openai = {
+          settings.baseURL = "http://127.0.0.1:17321";
           headers = {
             sleeve-provider = "codex";
             sleeve-harness = "opencode";

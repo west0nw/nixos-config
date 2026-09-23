@@ -78,7 +78,7 @@ of an update.
 | Ordinary nixpkgs package | Update `nixpkgs` deliberately; this affects the whole system |
 | Codex CLI | `nix flake update nixpkgs-codex` |
 | ChatGPT/Codex desktop | `nix flake update llm-agents` |
-| OpenCode CLI + desktop | Change the release tag in `flake.nix`, update `nixpkgs-opencode`, then prefetch the matching AppImage and update its hash |
+| OpenCode 2 CLI + desktop | Change the release tag in `flake.nix`, update `nixpkgs-opencode`, then prefetch the matching AppImage from `opencode.ai/files/bin/<version>/` and update its hash |
 | Sleev CLI | Update the version, tarball URL, and hash in `home/westonw/opencode/default.nix` |
 | Godot | Update `packages/godot.nix` version and hashes, then the launcher name in `home/westonw/godot.nix` |
 | Blender | Update the archive URL/hash and version-dependent library/Python/addon paths in `home/westonw/blender.nix` |

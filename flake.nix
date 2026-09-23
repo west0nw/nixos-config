@@ -17,8 +17,8 @@
       inputs.nixpkgs.follows = "nixpkgs-codex";
     };
 
-    # OpenCode (latest from upstream flake)
-    nixpkgs-opencode.url = "github:anomalyco/opencode/v1.18.3";
+    # OpenCode 2 (CLI from upstream flake, desktop from matching official AppImage)
+    nixpkgs-opencode.url = "github:anomalyco/opencode/v2.0.15";
 
     # Matt Pocock's engineering skills for OpenCode
     matt-pocock-skills = {
@@ -113,6 +113,7 @@
           ''
             shellcheck ${./home/westonw/scripts}/*.sh
             node --input-type=module --check < ${./home/westonw/opencode/plugins/goal.js}
+            node ${./tests/test_goal_plugin.mjs} ${./home/westonw/opencode/plugins/goal.js}
             python3 ${./tests/test_desktop_scripts.py} ${./home/westonw/scripts}
             touch "$out"
           '';

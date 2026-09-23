@@ -115,10 +115,9 @@ in
     recursive = true;
   };
 
-  programs.opencode.settings.mcp.blender = {
+  programs.opencode.settings.mcp.servers.blender = {
     type = "local";
     command = [ "${blenderMcp}/bin/blender-mcp" ];
-    enabled = true;
     environment = {
       BLENDER_MCP_HOST = "localhost";
       BLENDER_MCP_PORT = "9876";

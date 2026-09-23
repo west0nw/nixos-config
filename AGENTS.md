@@ -20,6 +20,7 @@ docs/audit-2026-09-05.md          # Audit findings and remaining verification li
 docs/wifi-2026-09-05.md           # MT7925 stall evidence, workaround, and verification
 packages/godot.nix               # Official Godot binary derivation used by the host overlay
 tests/test_desktop_scripts.py    # Isolated Wi-Fi menu and VPN config regression tests
+tests/test_goal_plugin.mjs       # OpenCode 2 goal-loop lifecycle regression test
 hosts/
   nullrunner/
     default.nix                  # Framework host-specific settings
@@ -355,26 +356,35 @@ Packaging and settings live in `home/westonw/opencode/default.nix`. Use the nati
 settings; the Blender integration lives in `home/westonw/blender.nix`. OpenCode
 uses `environment` for local MCP variables. Codex's system MCP entry uses `env`.
 
-The `nixpkgs-opencode` input is pinned to an upstream OpenCode release tag. The
-CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`, which
-keeps it newer than the version in the main nixpkgs input. Its curl-based
-self-updater is disabled because Nix owns the installed version.
+The `nixpkgs-opencode` input is pinned to an upstream OpenCode 2 release tag.
+The CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`,
+which keeps it newer than the version in the main nixpkgs input. OpenCode
+2.0.15's upstream completion generator fails after its build changes directory;
+`default.nix` overrides `postInstall` to skip that step. Recheck the override
+when updating. The CLI wrapper points `OPENCODE_PARCEL_WATCHER_PATH` at the
+upstream node modules' native watcher binding and adds the C++ runtime library
+path; otherwise V2 logs `watcher backend not supported` on Linux and misses
+recursive config changes. Its self-updater is disabled because Nix owns the
+installed version.
 
-OpenCode Desktop uses the official AppImage for the same release version. Do
-not replace it with the upstream flake's `opencode-desktop` output without first
-confirming that output builds. As of OpenCode `v1.18.3`, the upstream desktop
-derivation fails because it requires Bun `1.3.14` while its locked nixpkgs
-provides Bun `1.3.13` (upstream issue #36331). The AppImage is wrapped with
-`pkgs.appimageTools.wrapType2`, then with explicit Electron Wayland flags to
-prevent blurry XWayland rendering. A Home Manager desktop entry supplies the
-launcher and upstream icon.
+OpenCode Desktop uses the official AppImage from
+`https://opencode.ai/files/bin/<version>/opencode-desktop-linux-x86_64.AppImage`
+for the same release version. Do not replace it with the upstream flake's
+`opencode-desktop` source build without testing that build. The AppImage is
+wrapped with `pkgs.appimageTools.wrapType2`, then with explicit Electron Wayland
+flags to prevent blurry XWayland rendering. A Home Manager desktop entry
+supplies the launcher and upstream icon.
+
+Stylix's OpenCode target still emits the V1 `tui.json` and V1 theme format, so
+`opencode/default.nix` disables that target. It selects V2's built-in dark
+Catppuccin theme through `OPENCODE_CLI_CONFIG_CONTENT`, keeping the V2
+`cli.json` file writable for the terminal client's own preferences.
 
 The private goal-loop plugin is deployed from
 `home/westonw/opencode/plugins/goal.js` to OpenCode's global plugin directory.
-It is a self-contained ESM file with no runtime package imports so both
-the CLI's Bun runtime and Desktop's Node sidecar can load it despite Desktop's
-broken `@opencode-ai/plugin@local` dependency preparation. Keep it
-dependency-free unless that upstream bug is confirmed fixed. Goal state lives
+It uses OpenCode 2's `setup`, session hooks, tool transform, synthetic messages,
+and event stream. It is a self-contained ESM file with no runtime package
+imports, so both the CLI and Desktop sidecar can load it. Goal state lives
 under `$XDG_DATA_HOME/opencode/goal-loop/`, outside project repositories.
 Only agent tools are exposed; there are no user-facing goal commands. Starting
 a goal requires an explicit request containing the standalone word `goal`; the
@@ -385,9 +395,8 @@ blocking choices and reserve commentary for progress updates so a decision
 prompt is not emitted once as commentary and again as a final answer. Automatic
 continuations also tell the agent to pause rather than repeat a prose question.
 Do not add server commands for status or control operations because Desktop
-always turns those into model prompts.
-DCP's zero-token `/dcp` interception uses the separate TUI plugin API, which
-Desktop does not host.
+always turns those into model prompts. `tests/test_goal_plugin.mjs` exercises
+authorization, continuation, pause/resume, and completion using a fake V2 context.
 
 Wayfinder and its required Matt Pocock skills are pinned through the
 `matt-pocock-skills` non-flake input and deployed globally under
@@ -401,9 +410,10 @@ sync. A flake input pinned to an exact tag does not advance merely by running
 1. Change the `nixpkgs-opencode` release tag in `flake.nix`.
 2. Update the input with `nix flake update nixpkgs-opencode --flake ~/nixos-config`.
 3. Prefetch the matching `opencode-desktop-linux-x86_64.AppImage` with
-   `nix store prefetch-file --json <release-asset-url>`.
+   `nix store prefetch-file --json https://opencode.ai/files/bin/<version>/opencode-desktop-linux-x86_64.AppImage`.
 4. Replace the AppImage hash in `home/westonw/opencode/default.nix` with the returned hash.
-5. Run `nix flake check` and build the Home Manager activation package so the
+5. Recheck whether the CLI `postInstall` override is still needed. Run
+   `nix flake check` and build the Home Manager activation package so the
    desktop application itself is tested, not only evaluated:
 
 ```bash
