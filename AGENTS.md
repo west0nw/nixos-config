@@ -355,6 +355,9 @@ Packaging and settings live in `home/westonw/opencode/default.nix`. Use the nati
 `programs.opencode.settings` attribute set so other modules can contribute MCP
 settings; the Blender integration lives in `home/westonw/blender.nix`. OpenCode
 uses `environment` for local MCP variables. Codex's system MCP entry uses `env`.
+The personal Simple MCP server reuses the existing Codex plugin at
+`~/plugins/simple` and points to the credential file managed by Simple's token
+lifecycle; do not copy its bearer token into Nix.
 
 The `nixpkgs-opencode` input is pinned to an upstream OpenCode 2 release tag.
 The CLI comes from `inputs.nixpkgs-opencode.packages.${pkgs.system}.opencode`,

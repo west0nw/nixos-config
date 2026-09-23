@@ -110,6 +110,19 @@ in
           type = "remote";
           url = "https://mcp.linear.app/mcp";
         };
+        mcp.servers.simple = {
+          type = "local";
+          command = [
+            "/etc/profiles/per-user/westonw/bin/uv"
+            "run"
+            "--directory"
+            "/home/westonw/plugins/simple"
+            "--locked"
+            "python"
+            "scripts/server.py"
+          ];
+          environment.SIMPLE_CODEX_CREDENTIALS = "/home/westonw/.config/simple-codex/credentials.json";
+        };
       }
       // lib.optionalAttrs sleevEnabled {
         providers.openai = {
