@@ -55,7 +55,7 @@ home/westonw/
   swaync.nix                     # Notification daemon config (replaces mako)
   spicetify.nix                  # Spotify theming via Spicetify
   opencode/
-    default.nix                  # CLI/Desktop packaging, native HM settings, Sleev, skills
+    default.nix                  # CLI/Desktop packaging, native HM settings, skills
     AGENTS.md                    # Global OpenCode instructions deployed by Home Manager
     plugins/
       goal.js                    # Private persistent goal-loop plugin
@@ -423,18 +423,6 @@ sync. A flake input pinned to an exact tag does not advance merely by running
 nix build --no-link \
   .#nixosConfigurations.nullrunner.config.home-manager.users.westonw.home.activationPackage
 ```
-
-OpenCode's optional Sleev routing is controlled by `sleevEnabled` in
-`home/westonw/opencode/default.nix`. It is enabled; `sleev gateway status` was
-healthy during the September 2026 audit. Keep routing contingent on a healthy gateway. The Sleev CLI is packaged from its official `sleev-linux-x64` npm
-tarball and pinned by version and hash. Update those together rather than using
-`sleev upgrade`, which cannot replace the immutable Nix store CLI. Sleev's
-upstream gateway is dynamically linked, so `nullrunner` enables `programs.nix-ld`
-and lets Sleev manage the gateway binary, authentication, registration, and user
-service in its mutable data directories. Sleev 1.6.7's gateway expects the
-`sleeve-provider` and `sleeve-harness` headers despite its documentation using
-the shorter `sleev-*` spelling. OpenCode uses the `codex` Sleev route because
-its OpenAI credential is a ChatGPT OAuth login, not a pay-as-you-go API key.
 
 ### Theming
 

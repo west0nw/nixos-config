@@ -14,7 +14,7 @@ Read [AGENTS.md](AGENTS.md) before editing. The
 | Add an ordinary desktop package | `home/westonw/default.nix` → `home.packages` |
 | Configure an application | Its module under `home/westonw/`; import new modules in `default.nix` |
 | ChatGPT/Codex desktop and Codex CLI | `home/westonw/codex.nix` |
-| OpenCode, Sleev, skills, MCP settings | `home/westonw/opencode/default.nix` |
+| OpenCode, skills, MCP settings | `home/westonw/opencode/default.nix` |
 | Blender binary, addon, and MCP server | `home/westonw/blender.nix` |
 | Godot launcher / binary packaging | `home/westonw/godot.nix` / `packages/godot.nix` |
 | VPN startup, VPN toggle, torrent interface | `home/westonw/vpn.nix` and `home/westonw/scripts/proton-vpn-*.sh` |
@@ -79,7 +79,6 @@ of an update.
 | Codex CLI | `nix flake update nixpkgs-codex` |
 | ChatGPT/Codex desktop | `nix flake update llm-agents` |
 | OpenCode 2 CLI + desktop | Change the release tag in `flake.nix`, update `nixpkgs-opencode`, then prefetch the matching AppImage from `opencode.ai/files/bin/<version>/` and update its hash |
-| Sleev CLI | Update the version, tarball URL, and hash in `home/westonw/opencode/default.nix` |
 | Godot | Update `packages/godot.nix` version and hashes, then the launcher name in `home/westonw/godot.nix` |
 | Blender | Update the archive URL/hash and version-dependent library/Python/addon paths in `home/westonw/blender.nix` |
 
@@ -162,7 +161,6 @@ hyprctl configerrors
 hyprctl clients -j
 systemctl --user --failed
 journalctl --user -b -u waybar -u hypridle -u awww
-sleev gateway status
 ```
 
 For blurry apps, inspect the client's `xwayland` flag and fix the app-specific
@@ -173,11 +171,6 @@ Waybar, hypridle, and awww are owned by systemd user services. Do not also add t
 to Hyprland `exec-once`. The wallpaper service waits for its socket and uses the
 same default image as Stylix; the switcher discovers committed images from the
 Nix store rather than relying on a checkout at `~/nixos-config`.
-
-Sleev is enabled and was healthy during the audit. If it becomes unavailable,
-OpenCode's configured local route cannot serve requests. Diagnose the gateway first;
-the documented switch in `opencode/default.nix` can disable routing if appropriate.
-Authentication and gateway state stay outside this repository.
 
 ### Scar readiness
 
