@@ -31,6 +31,7 @@ let
     name = "waybar-bluetooth-menu";
     runtimeInputs = with pkgs; [
       bluez
+      util-linux
       wofi
       gawk
       coreutils

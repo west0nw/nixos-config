@@ -79,11 +79,13 @@ case "$key" in
     if [[ "$powered" == "yes" ]]; then
       $btctl power off >/dev/null 2>&1 || true
     else
-      $btctl power on >/dev/null 2>&1 || true
+      rfkill unblock bluetooth
+      $btctl power on
     fi
     ;;
   B)
-    $btctl power on >/dev/null 2>&1 || true
+    rfkill unblock bluetooth
+    $btctl power on
     timeout 8 $btctl scan on >/dev/null 2>&1 || true
 
     declare -A scan_mac_by_key
