@@ -268,6 +268,17 @@ latter uses the upstream OpenCode flake directly.
 `2560x1600@165` at fractional scale `1.25`; the external display uses scale `1`.
 The monitor configuration is in `home/westonw/hyprland.nix`.
 
+Home Manager generates `~/.config/hypr/hyprland.lua` (`configType = "lua"`)
+because Hyprland has deprecated the `.conf` format. Keep settings in Lua's
+structured `hl.config`, `hl.monitor`, `hl.bind`, and rule shapes; the old
+Hyprlang strings are not valid Lua settings. The Stylix Hyprland target is
+disabled because it still emits dotted Hyprlang color keys; `hyprland.nix`
+uses the Stylix palette directly in native Lua color fields. The VPN and
+wallpaper modules contribute Lua local variables, and VPN autostart uses a
+`hyprland.start` hook. After editing Hyprland settings, evaluate the generated
+Home Manager `hypr/hyprland.lua` text and check it with
+`Hyprland --verify-config -c <generated-file>` in addition to `nix flake check`.
+
 Applications using native Wayland render at the correct physical resolution.
 Applications that fall back to XWayland can be rendered at a lower logical
 resolution and enlarged by Hyprland on the `1.25` display. This causes fuzzy,

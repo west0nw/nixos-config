@@ -34,9 +34,13 @@ in
   ];
 
   wayland.windowManager.hyprland.settings = {
-    "$vpn" = "${vpnToggle}/bin/proton-vpn-toggle";
-    exec-once = [ "${protonVpnAutostart}/bin/proton-vpn-autostart" ];
+    vpn._var = "${vpnToggle}/bin/proton-vpn-toggle";
   };
+  wayland.windowManager.hyprland.extraConfig = ''
+    hl.on("hyprland.start", function()
+      hl.exec_cmd("${protonVpnAutostart}/bin/proton-vpn-autostart")
+    end)
+  '';
 
   # The client must stay bound to the VPN interface, including when the VPN is down.
   xdg.configFile."qBittorrent/qBittorrent.conf".text = ''

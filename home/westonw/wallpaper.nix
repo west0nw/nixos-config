@@ -53,6 +53,6 @@ in
   services.hyprpaper.enable = lib.mkForce false;
   services.awww.enable = true;
   systemd.user.services.awww.Service.ExecStartPost = "${wallpaperStartup}/bin/wallpaper-startup";
-  wayland.windowManager.hyprland.settings."$wallpaper" =
+  wayland.windowManager.hyprland.settings.wallpaper._var =
     "${wallpaperSwitcher}/bin/wallpaper-switcher";
 }
