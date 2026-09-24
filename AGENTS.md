@@ -381,7 +381,9 @@ supplies the launcher and upstream icon.
 Stylix's OpenCode target still emits the V1 `tui.json` and V1 theme format, so
 `opencode/default.nix` disables that target. It selects V2's built-in dark
 Catppuccin theme through `OPENCODE_CLI_CONFIG_CONTENT`, keeping the V2
-`cli.json` file writable for the terminal client's own preferences.
+`cli.json` file writable for the terminal client's own preferences. A global
+V2 provider policy denies the `opencode` provider used by Zen while leaving the
+separate `opencode-go` provider and its subscription models available.
 
 The private goal-loop plugin is deployed from
 `home/westonw/opencode/plugins/goal.js` to OpenCode's global plugin directory.

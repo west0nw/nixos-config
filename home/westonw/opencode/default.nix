@@ -71,6 +71,13 @@ in
     settings = {
       "$schema" = "https://opencode.ai/config.json";
       update = "disable";
+      experimental.policies = [
+        {
+          action = "provider.use";
+          resource = "opencode";
+          effect = "deny";
+        }
+      ];
       permissions = [
         {
           action = "external_directory";
