@@ -424,7 +424,6 @@ in
         (bind "SUPER + mouse:273" "hl.dsp.window.resize()" { mouse = true; })
         (bind "XF86AudioMute" (run "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") {
           locked = true;
-          repeating = true;
         })
         (bind "XF86AudioLowerVolume" (run "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-") {
           locked = true;
