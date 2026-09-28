@@ -7,9 +7,26 @@
 }:
 
 let
-  codex = inputs.nixpkgs-codex.legacyPackages.${pkgs.stdenv.hostPlatform.system}.codex;
-  chatgpt = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt.override {
+  simpleMcpEnv = import ./simple-mcp-env.nix { inherit pkgs; };
+  codexUpstream = inputs.nixpkgs-codex.legacyPackages.${pkgs.stdenv.hostPlatform.system}.codex;
+  codex = pkgs.symlinkJoin {
+    name = "codex-with-simple-mcp";
+    paths = [ codexUpstream ];
+    buildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/codex --run '. ${simpleMcpEnv}'
+    '';
+  };
+  chatgptUpstream = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt.override {
     commandLineArgs = "--enable-features=WaylandWindowDecorations --enable-wayland-ime=true";
+  };
+  chatgpt = pkgs.symlinkJoin {
+    name = "chatgpt-with-simple-mcp";
+    paths = [ chatgptUpstream ];
+    buildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/chatgpt --run '. ${simpleMcpEnv}'
+    '';
   };
 in
 {

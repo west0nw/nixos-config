@@ -43,6 +43,7 @@ home/westonw/
   default.nix                    # Desktop imports, ordinary packages, browser, shell
   blender.nix                    # Prebuilt Blender, addon, MCP server integration
   codex.nix                      # Codex CLI, ChatGPT desktop, bubblewrap dependency
+  simple-mcp-env.nix             # Private Simple token loaded by app wrappers at launch
   godot.nix                      # Native Wayland wrapper and launcher
   vpn.nix                        # Proton startup/toggle and qBittorrent interface
   wallpaper.nix                  # Store-backed switcher and awww user service
@@ -360,7 +361,10 @@ uses `env`. Simple's remote MCP endpoint is `https://simple.weston.foo/mcp`.
 It uses a personal bearer token (no OAuth). OpenCode sends the header
 `Authorization: Bearer {env:SIMPLE_API_TOKEN}`; Codex's system MCP entry uses
 `bearer_token_env_var = "SIMPLE_API_TOKEN"`. Supply that variable privately in
-each client's launch environment; never put the token in Nix or the repository.
+each client's launch environment; the CLI and desktop wrappers in
+`simple-mcp-env.nix` load it from the existing 0600
+`~/.config/simple-codex/credentials.json` file at launch when it is not set.
+Never put the token in Nix or the repository.
 The old personal Codex plugin at `~/plugins/simple` is not needed for this
 connection.
 

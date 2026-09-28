@@ -7,6 +7,7 @@
 }:
 
 let
+  simpleMcpEnv = import ../simple-mcp-env.nix { inherit pkgs; };
   opencodeUpstream =
     (inputs.nixpkgs-opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode).overrideAttrs
       (_: {
@@ -25,7 +26,8 @@ let
         wrapProgram $out/bin/$executable \
           --set OPENCODE_PARCEL_WATCHER_PATH \
             ${opencodeUpstream.node_modules}/packages/cli/node_modules/@parcel/watcher-linux-x64-glibc/watcher.node \
-          --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}
+          --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]} \
+          --run '. ${simpleMcpEnv}'
       done
     '';
   };
@@ -47,7 +49,8 @@ let
       wrapProgram $out/bin/opencode-desktop \
         --add-flags "--ozone-platform=wayland" \
         --add-flags "--enable-features=WaylandWindowDecorations" \
-        --add-flags "--enable-wayland-ime=true"
+        --add-flags "--enable-wayland-ime=true" \
+        --run '. ${simpleMcpEnv}'
     '';
   };
 
