@@ -95,17 +95,10 @@ in
         url = "https://mcp.linear.app/mcp";
       };
       mcp.servers.simple = {
-        type = "local";
-        command = [
-          "/etc/profiles/per-user/westonw/bin/uv"
-          "run"
-          "--directory"
-          "/home/westonw/plugins/simple"
-          "--locked"
-          "python"
-          "scripts/server.py"
-        ];
-        environment.SIMPLE_CODEX_CREDENTIALS = "/home/westonw/.config/simple-codex/credentials.json";
+        type = "remote";
+        url = "https://simple.weston.foo/mcp";
+        oauth = false;
+        headers.Authorization = "Bearer {env:SIMPLE_API_TOKEN}";
       };
     };
   };
