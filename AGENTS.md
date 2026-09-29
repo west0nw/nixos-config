@@ -399,6 +399,12 @@ Catppuccin theme through `OPENCODE_CLI_CONFIG_CONTENT`, keeping the V2
 V2 provider policy denies the `opencode` provider used by Zen while leaving the
 separate `opencode-go` provider and its subscription models available.
 
+Global subagent model-selection guidance lives in
+`home/westonw/opencode/AGENTS.md`. It limits delegated work to GPT-6 Astra,
+GPT-6.1 Sol, and GPT-6 Luna, with explicit reasoning-effort selection based on
+correctness and cost. Astra is required for 3D work. The explore agent defaults
+to `openai/gpt-6-luna#medium`; select a stronger model or effort when needed.
+
 The private goal-loop plugin is deployed from
 `home/westonw/opencode/plugins/goal.js` to OpenCode's global plugin directory.
 It uses OpenCode 2's `setup`, session hooks, tool transform, synthetic messages,

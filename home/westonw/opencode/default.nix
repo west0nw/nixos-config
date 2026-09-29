@@ -88,7 +88,7 @@ in
           effect = "allow";
         }
       ];
-      agents.explore.model = "openai/gpt-5.6-terra#low";
+      agents.explore.model = "openai/gpt-6-luna#medium";
       mcp.servers.linear_ember = {
         type = "remote";
         url = "https://mcp.linear.app/mcp";
