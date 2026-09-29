@@ -40,7 +40,12 @@ elif name == "wofi":
             sys.exit(1)
         print(next(row for row in rows if needle in row))
 elif name == "hyprctl":
-    print("[]")
+    if args == ["clients", "-j"]:
+        print(os.environ.get("TEST_HYPR_CLIENTS", "[]"))
+    elif args[0] == "dispatch":
+        print("ok")
+    else:
+        raise RuntimeError(args)
 elif name == "slurp":
     if os.environ.get("TEST_SLURP_CANCEL") == "1":
         sys.exit(1)
@@ -161,6 +166,15 @@ class DesktopScripts(unittest.TestCase):
         self.assertTrue(data["start_app_minimized"])
         self.assertEqual(data["connect_at_app_startup"], "FASTEST")
         self.assertIn(["protonvpn-app"], self.calls())
+
+    def test_vpn_toggle_uses_lua_dispatch_for_existing_window(self):
+        result = self.run_script("proton-vpn-toggle.sh",
+            TEST_HYPR_CLIENTS='[{"class": "proton.vpn.app.gtk"}]')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [
+            ["hyprctl", "clients", "-j"],
+            ["hyprctl", "dispatch", 'hl.dsp.workspace.toggle_special("vpn")'],
+        ])
 
 
 if __name__ == "__main__":

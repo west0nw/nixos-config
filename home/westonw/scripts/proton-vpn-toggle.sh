@@ -5,7 +5,7 @@ app_config="${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN/app-config.json"
 
 if hyprctl clients -j \
   | jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
-  hyprctl dispatch togglespecialworkspace vpn
+  hyprctl dispatch 'hl.dsp.workspace.toggle_special("vpn")'
   exit
 fi
 
@@ -22,7 +22,7 @@ protonvpn-app >/dev/null 2>&1 &
 for _ in $(seq 1 50); do
   if hyprctl clients -j \
     | jq -e '.[] | select(.class == "proton.vpn.app.gtk")' >/dev/null; then
-    hyprctl dispatch togglespecialworkspace vpn
+    hyprctl dispatch 'hl.dsp.workspace.toggle_special("vpn")'
     exit
   fi
   sleep 0.1
