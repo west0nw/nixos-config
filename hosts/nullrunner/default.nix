@@ -28,10 +28,6 @@
             BLENDER_PATH = "/etc/profiles/per-user/westonw/bin/blender";
           };
         };
-        mcp_servers.simple = {
-          url = "https://simple.weston.foo/mcp";
-          bearer_token_env_var = "SIMPLE_API_TOKEN";
-        };
       };
 
   # Use the official binary to avoid memory-heavy local Godot builds.

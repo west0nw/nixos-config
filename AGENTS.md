@@ -339,11 +339,13 @@ by the app. Model and reasoning selectors, trusted projects, bundled plugins, an
 the desktop's versioned `node_repl` bridge all persist there. Do not populate
 `programs.codex.settings`, because Home Manager would replace the file with an
 immutable store symlink and break those updates. The lower-precedence
-`/etc/codex/config.toml` in `hosts/nullrunner/default.nix` provides declarative
-Blender and Simple MCP servers without owning user preferences. `blender.nix`
+`/etc/codex/config.toml` in `hosts/nullrunner/default.nix` provides the declarative
+Blender MCP server without owning user preferences. `blender.nix`
 installs both the server and Blender wrappers at stable user-profile paths
 referenced there. OAuth credentials remain in Codex's mutable auth storage;
 Simple's bearer token comes from the private launch environment, never Nix.
+Codex's Simple MCP entry is registered in its writable user config with
+`codex mcp add simple --url https://simple.weston.foo/mcp --bearer-token-env-var SIMPLE_API_TOKEN`.
 
 `codex.nix` also owns `~/coding/web/ember_lighting/.codex/config.toml`, containing
 the project-scoped `linear_ember` MCP connection. Proxy continues to use the hosted
@@ -359,7 +361,7 @@ settings; the Blender integration lives in `home/westonw/blender.nix`. OpenCode
 uses `environment` for local MCP variables. Codex's Blender system MCP entry
 uses `env`. Simple's remote MCP endpoint is `https://simple.weston.foo/mcp`.
 It uses a personal bearer token (no OAuth). OpenCode sends the header
-`Authorization: Bearer {env:SIMPLE_API_TOKEN}`; Codex's system MCP entry uses
+`Authorization: Bearer {env:SIMPLE_API_TOKEN}`; Codex's writable user MCP entry uses
 `bearer_token_env_var = "SIMPLE_API_TOKEN"`. Supply that variable privately in
 each client's launch environment; the CLI and desktop wrappers in
 `simple-mcp-env.nix` load it from the existing 0600
