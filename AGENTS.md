@@ -60,6 +60,8 @@ home/westonw/
     AGENTS.md                    # Global OpenCode instructions deployed by Home Manager
     plugins/
       goal.js                    # Private persistent goal-loop plugin
+  skills/
+    scar/SKILL.md               # Shared scar access and self-hosting skill (OpenCode + Codex)
   nixvim/
     default.nix                  # Nixvim entrypoint (options, colorscheme)
     plugins.nix                  # Editor plugins (telescope, nvim-tree, treesitter, etc.)
@@ -419,6 +421,11 @@ Wayfinder and its required Matt Pocock skills are pinned through the
 `matt-pocock-skills` non-flake input and deployed globally under
 `~/.config/opencode/skills/`. Preserve complete skill directories because the
 setup, domain-modeling, and prototype skills reference companion Markdown files.
+
+The local `home/westonw/skills/scar/SKILL.md` is deployed to both
+`~/.config/opencode/skills/scar/` and `~/.codex/skills/scar/` on nullrunner.
+It uses the existing `ssh scar` alias, which proxies through the user-level
+Tailscale socket, and points agents to scar's declarative NixOS modules.
 
 The release tag in `flake.nix`, AppImage URL, and fixed-output hash must stay in
 sync. A flake input pinned to an exact tag does not advance merely by running

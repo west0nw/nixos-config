@@ -41,6 +41,8 @@ in
     package = codex;
   };
 
+  home.file.".codex/skills/scar".source = ./skills/scar;
+
   # Restore the writable app-managed config after removing the previous
   # Home Manager symlink. Fresh installs let Codex create the file itself.
   home.activation.restoreMutableCodexConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''

@@ -187,9 +187,12 @@ this flake. Both profiles reconnect automatically; `scar-direct` has priority
 100 so the generic wired profile does not replace it after Scar reboots. Internet access through
 this arrangement requires nullrunner to stay awake and connected to the internet.
 
-Connect with `ssh westonw@10.42.0.2`; join Minecraft from nullrunner at
-`10.42.0.2:25565` using Java 1.21.11. This setup does not publish the server to
-the internet or configure router port forwarding.
+From nullrunner, `ssh scar` uses the existing SSH alias and user-level Tailscale
+proxy, so it works when both laptops are online in the tailnet. Check tailnet
+reachability with `tailscale --socket=/run/user/1000/tailscaled.sock status`.
+For direct Ethernet, connect with `ssh westonw@10.42.0.2`; join Minecraft from
+nullrunner at `10.42.0.2:25565` using Java 1.21.11. This setup does not publish
+the server to the internet or configure router port forwarding.
 
 Use `systemctl status minecraft-server` and `journalctl -u minecraft-server -f`
 over SSH to inspect the server. World data lives in `/var/lib/minecraft`.

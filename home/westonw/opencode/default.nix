@@ -108,6 +108,7 @@ in
 
   xdg.configFile."opencode/AGENTS.md".source = ./AGENTS.md;
   xdg.configFile."opencode/plugins/goal.js".source = ./plugins/goal.js;
+  xdg.configFile."opencode/skills/scar".source = ../skills/scar;
 
   xdg.configFile."opencode/skills/wayfinder" = {
     source = "${inputs.matt-pocock-skills}/skills/engineering/wayfinder";
