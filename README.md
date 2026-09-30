@@ -167,6 +167,15 @@ For blurry apps, inspect the client's `xwayland` flag and fix the app-specific
 backend. Preserve Vivaldi's HTTP/HTTPS defaults: the ChatGPT desktop entry otherwise
 captures browser sign-in URLs.
 
+ChatGPT Desktop 26.924.22138 has a Linux startup regression that leaves helper
+processes as zombies and prevents both opening Codex chats and starting new tasks.
+The desktop pin was updated to 26.928.20755 for the upstream fix
+([issue #48554](https://github.com/openai/codex/issues/48554)). If this signature
+recurs, inspect `~/.local/state/codex/logs/` for a shell-environment timeout and
+bundled-plugin reconciliation that starts but never completes. The standalone
+Codex CLI can still work while the desktop is affected; resetting saved chats
+does not address this failure.
+
 Waybar, hypridle, and awww are owned by systemd user services. Do not also add them
 to Hyprland `exec-once`. The wallpaper service waits for its socket and uses the
 same default image as Stylix; the switcher discovers committed images from the

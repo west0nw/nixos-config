@@ -336,6 +336,16 @@ captures its own OAuth URL instead of opening the sign-in page in the browser.
 Keep `bubblewrap` in the desktop user profile: the desktop runtime discovers
 `bwrap` on PATH, while the upstream Codex CLI only supplies it to its own wrapper.
 
+Avoid ChatGPT Desktop 26.924.22138 on Linux: its runtime overwrites libuv's
+`SIGCHLD` handler, leaving exited helpers as zombies and blocking bundled-plugin
+setup, existing chats, and new tasks (upstream `openai/codex#48554`). The
+`llm-agents` input now supplies 26.928.20755. When verifying desktop updates,
+check that bundled-plugin reconciliation completes, an existing chat renders,
+and a new chat responds; successful standalone CLI calls do not test this path.
+Desktop logs are under `~/.local/state/codex/logs/`; inspect the main app's
+children for persistent zombies when shell loading times out or Git is reported
+unavailable despite working from the terminal.
+
 Codex's global `~/.codex/config.toml` must remain a regular writable file managed
 by the app. Model and reasoning selectors, trusted projects, bundled plugins, and
 the desktop's versioned `node_repl` bridge all persist there. Do not populate
